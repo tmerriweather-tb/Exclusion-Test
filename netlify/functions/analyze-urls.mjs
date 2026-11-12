@@ -41,7 +41,7 @@ function extractHtml(html){
  const title=(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||'';
  const stripped=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ').replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi,' ').replace(/<!--[^]*?-->/g,' ').replace(/<[^>]+>/g,' ');
  const decode=s=>s.replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Math.min(1114111,Number(n))));
- return decode([title,...meta,stripped].join(' ')).replace(/\s+/g,' ').trim().slice(0,20000);
+ return {text:decode([title,...meta,stripped].join(' ')).replace(/\s+/g,' ').trim().slice(0,20000),meta:{title:decode(title).trim().slice(0,200),description:decode(meta[0]||'').trim().slice(0,400)}};
 }
 export async function handler(event){
  if(event.httpMethod!=='POST')return json(405,{error:'POST required'});
@@ -49,8 +49,8 @@ export async function handler(event){
  const websiteUrl=typeof req.websiteUrl==='string'?req.websiteUrl.trim():'';
  const artworkUrl=typeof req.artworkUrl==='string'?req.artworkUrl.trim():'';
  if(!websiteUrl&&!artworkUrl)return json(400,{error:'Provide a website or artwork URL.'});
- const out={website:'',artworkData:'',warnings:[]};
- if(websiteUrl){try{const page=await fetchPublic(websiteUrl);if(!page.type.includes('text/html')&&!page.type.includes('text/plain'))throw Error('Website did not return HTML or plain text');out.website=page.type.includes('text/html')?extractHtml(page.bytes.toString('utf8')):page.bytes.toString('utf8').slice(0,20000);if(!out.website)throw Error('No readable website text');}catch(e){out.warnings.push('Website: '+e.message);}}
+ const out={website:'',websiteMeta:{},artworkData:'',warnings:[]};
+ if(websiteUrl){try{const page=await fetchPublic(websiteUrl);if(!page.type.includes('text/html')&&!page.type.includes('text/plain'))throw Error('Website did not return HTML or plain text');if(page.type.includes('text/html')){const extracted=extractHtml(page.bytes.toString('utf8'));out.website=extracted.text;out.websiteMeta=extracted.meta;}else out.website=page.bytes.toString('utf8').slice(0,20000);if(!out.website)throw Error('No readable website text');}catch(e){out.warnings.push('Website: '+e.message);}}
  if(artworkUrl){try{const img=await fetchPublic(artworkUrl);const match=img.type.match(/^image\/(png|jpeg|webp|gif|bmp)(?:;|$)/);if(!match)throw Error('Artwork URL must return a supported image');out.artworkData=`data:image/${match[1]};base64,${img.bytes.toString('base64')}`;}catch(e){out.warnings.push('Artwork: '+e.message);}}
  if(!out.website&&!out.artworkData)return json(422,{error:out.warnings.join('; ')||'No content could be retrieved'});
  return json(200,out);

@@ -118,7 +118,7 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 .match-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .match-chip{font-size:11px;padding:3px 7px;border-radius:999px;background:var(--soft);color:var(--brand-plum)}
 .question-list div{padding:10px 12px;border-radius:8px;background:var(--soft-purple);color:var(--brand-gray);font-size:14px}
-.decision-likely{border-top:6px solid #7d285f}.decision-review{border-top:6px solid #b7862f}.decision-clear{border-top:6px solid #5c7d4d}
+.website-theme-summary{border:1px solid #c7b2c2;border-left:5px solid #7d285f;border-radius:10px;padding:16px;margin:0 0 18px;background:rgba(125,40,95,.045)}.website-theme-summary h3{margin:0 0 8px;font-size:1.1rem}.website-theme-summary p{margin:8px 0;line-height:1.5}.website-theme-summary ul{margin:8px 0;padding-left:20px}.website-theme-summary li{margin:5px 0}.decision-likely{border-top:6px solid #7d285f}.decision-review{border-top:6px solid #b7862f}.decision-clear{border-top:6px solid #5c7d4d}
 .no-match{color:var(--brand-gray);font-size:14px}
 
 .venue-impact{margin-top:9px}
@@ -296,7 +296,7 @@ header h1,
   <div class="assistant-field"><label for="artworkUrl">Artwork image URL</label><input id="artworkUrl" type="url" placeholder="https://example.com/ad.jpg"></div>
   <div class="assistant-field"><label for="artworkFile">Or upload artwork image (optional)</label><input id="artworkFile" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/gif"></div>
 </div>
-<p class="assistant-help">Free text-only website scan and image OCR (reads visible words, not visual subjects). Website/image URL retrieval uses a Netlify Function; OCR runs in your browser using free Tesseract.js. No OpenAI key or paid AI API. Unreadable content requires manual review.</p>
+<p class="assistant-help">Free website-theme summary based on visible website text, plus artwork OCR (reads visible words, not visual subjects). Website/image URL retrieval uses a Netlify Function; OCR runs in your browser using free Tesseract.js. No OpenAI key or paid AI API. Unreadable content requires manual review.</p>
 <div id="urlAnalysisStatus" class="url-analysis-status" role="status" aria-live="polite"></div>
 <div class="assistant-actions">
           <div class="assistant-field">
@@ -853,6 +853,53 @@ document.getElementById('clear').addEventListener('click',()=>{
 
 render();
 
+// Explainable, no-AI theme inference. Only terms present in retrieved text are used.
+function inferWebsiteTheme(raw,sourceMeta={}){
+ const text=String(raw||'').replace(/\s+/g,' ').trim();
+ if(!text)return null;
+ const lead=[sourceMeta.title,sourceMeta.description].filter(Boolean).join('. ');
+ const clean=lead||text.slice(0,1700);
+ const normalized=normalize(clean+' '+text.slice(0,9000));
+ const stop=new Set(['home','welcome','contact','about','learn more','privacy','cookie','terms','login','sign in','read more','menu']);
+ const concepts=Object.entries(CONCEPTS).map(([name,c])=>{
+  const hits=c.terms.filter(t=>{
+   const term=normalize(t).trim();
+   if(term.length<4||stop.has(term))return false;
+   return new RegExp('(^|[^a-z0-9])'+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^a-z0-9])','i').test(normalized);
+  });
+  const prominent=hits.filter(t=>normalize(lead).includes(normalize(t)));
+  return {name,hits,score:prominent.length*5+hits.length};
+ }).filter(x=>x.hits.length).sort((a,b)=>b.score-a.score);
+ const sentences=text.match(/[^.!?\n]{28,260}[.!?]?/g)||[];
+ const ranked=sentences.map((sentence,i)=>{
+  const low=normalize(sentence);
+  const count=concepts.slice(0,5).reduce((n,c)=>n+c.hits.filter(h=>low.includes(normalize(h))).length,0);
+  return {sentence:sentence.trim(),score:count*4+(i<8?2:0),index:i};
+ }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||a.index-b.index);
+ const examples=[...new Set(ranked.slice(0,3).map(x=>x.sentence))];
+ const top=concepts.slice(0,3);
+ const title=sourceMeta.title||text.slice(0,95).split(/[.!?]/)[0];
+ const description=sourceMeta.description||'';
+ let summary='';
+ if(top.length){
+  summary='The website appears to focus on '+top.map(x=>x.name.toLowerCase()).join(', ')+'.';
+  summary+=' This is a rule-based interpretation of detected website wording, not a visual or AI assessment.';
+ }else if(description){summary='The website describes itself as: '+description.slice(0,260)+(description.length>260?'…':'');}
+ else{summary='A reliable business category could not be inferred from the available webpage text. Manual review is recommended.';}
+ return {title,description,summary,topics:top,examples,hasTheme:!!top.length,scannedCharacters:text.length};
+}
+function renderWebsiteTheme(theme){
+ const box=document.createElement('section');box.className='website-theme-summary';
+ const h=document.createElement('h3');h.textContent='Website theme & business summary';box.append(h);
+ const p=document.createElement('p');p.textContent=theme.summary;box.append(p);
+ if(theme.title){const t=document.createElement('p');t.innerHTML='<strong>Website:</strong> ';t.append(document.createTextNode(theme.title));box.append(t);}
+ if(theme.description){const d=document.createElement('p');d.innerHTML='<strong>Site description:</strong> ';d.append(document.createTextNode(theme.description.slice(0,350)));box.append(d);}
+ if(theme.topics.length){const t=document.createElement('p');t.innerHTML='<strong>Detected themes:</strong> ';t.append(document.createTextNode(theme.topics.map(x=>x.name+' ('+x.hits.slice(0,3).join(', ')+')').join(' • ')));box.append(t);}
+ if(theme.examples.length){const t=document.createElement('div');const b=document.createElement('strong');b.textContent='Supporting website excerpts:';t.append(b);const ul=document.createElement('ul');theme.examples.forEach(e=>{const li=document.createElement('li');li.textContent=e;ul.append(li)});t.append(ul);box.append(t);}
+ const note=document.createElement('p');note.className='assistant-help';note.textContent='Theme detection uses public webpage text and predefined categories. It may miss products, nuanced claims, and visual content. Exclusion matches below are screening flags, not final decisions.';box.append(note);
+ return box;
+}
+
 // Free URL review: website extraction via Netlify Function; OCR runs locally in the browser.
 const freeReviewButton=document.getElementById('assistantAnalyze');
 const originalFreeReview=analyzeInquiry;
@@ -877,6 +924,7 @@ async function runFreeURLReview(){
  if((websiteUrl&&!isHttpUrl(websiteUrl))||(artworkUrl&&!isHttpUrl(artworkUrl))){status.textContent='Enter valid public http(s) URLs.';return;}
  freeReviewButton.disabled=true;freeReviewButton.textContent='Checking URLs and artwork…';
  const evidence=[],warnings=[];
+ let websiteTheme=null;
  try{
   if(websiteUrl||artworkUrl){
    status.textContent='Retrieving public webpage and artwork content…';
@@ -884,7 +932,10 @@ async function runFreeURLReview(){
     const response=await fetch('/.netlify/functions/analyze-urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({websiteUrl,artworkUrl})});
     const payload=await response.json().catch(()=>({error:'Unreadable server response'}));
     if(!response.ok)throw new Error(payload.error||'Retrieval failed');
-    if(payload.website)evidence.push('WEBSITE TEXT: '+payload.website);
+    if(payload.website){
+     websiteTheme=inferWebsiteTheme(payload.website,payload.websiteMeta||{});
+     evidence.push('WEBSITE TEXT: '+payload.website);
+    }
     warnings.push(...(payload.warnings||[]));
     if(artworkUrl){
      if(payload.artworkData){
@@ -923,6 +974,7 @@ async function runFreeURLReview(){
   }
   const r=document.getElementById('assistantResult');
   if(r.classList.contains('visible')){
+   if(websiteTheme){r.prepend(renderWebsiteTheme(websiteTheme));if(!websiteTheme.hasTheme)warnings.push('Website theme could not be identified confidently; inspect the website manually.');}
    if(warnings.length||artworkUrl||file){
     // Do not imply an OCR-only review can clear artwork based on visuals.
     if(!r.classList.contains('decision-likely')){

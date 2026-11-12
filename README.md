@@ -17,3 +17,7 @@
 - Website text is truncated to a safe length; extraction is not exhaustive. No match does not mean approved.
 - The Netlify function blocks known private/reserved addresses and validates redirects, but public untrusted URL fetching still warrants production security review and request throttling.
 - For shared filter views, deploy the server function alongside the HTML. A standalone local HTML file can use the optional local artwork upload for OCR (subject to CDN access), but website URL retrieval needs the Netlify Function.
+
+## Website theme summary upgrade
+
+The Compliance Copilot now displays a **Website theme & business summary** ahead of the exclusion results. It derives a topic summary from website title, description, and detected concept terms, and displays supporting excerpts. The same retrieved text is checked against all existing venue exclusions. This is explainable, rule-based inference, not generative AI; it does not understand visual-only advertising or guarantee approval. Replace the prior deployment with all files from this ZIP, including the updated Netlify Function (which returns websiteMeta).
