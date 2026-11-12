@@ -178,10 +178,11 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 @media(max-width:560px){.editor-grid{grid-template-columns:1fr}.editor-grid .wide{grid-column:auto}.mode-bar{justify-content:stretch}.mode-bar button{flex:1}}
 
 
-.url-analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:15px 0}
-.url-analysis-grid input{width:100%;box-sizing:border-box;border:1px solid #c8becb;border-radius:9px;padding:12px;font:500 14px "Museo Sans",Arial,sans-serif}
+.url-analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:13px;margin:15px 0}
+.url-analysis-grid input[type=url],.url-analysis-grid input[type=file]{width:100%;box-sizing:border-box;border:1px solid #c8becb;border-radius:9px;padding:11px;font:500 13px Arial,sans-serif}
 .url-analysis-status{font-size:13px;line-height:1.55;color:#5b4761;margin:8px 0 12px;white-space:pre-wrap}
 .url-analysis-evidence{background:#f7f3f8;border-left:4px solid #6d467b;padding:12px 15px;border-radius:6px;margin:12px 0;white-space:pre-wrap;font-size:13px;line-height:1.5}
+.url-analysis-evidence summary{cursor:pointer;font-weight:bold;margin-bottom:8px}
 </style>
 
 <style id="h2-font-fix">
@@ -291,12 +292,13 @@ header h1,
           <p class="assistant-help">Try a product, advertiser, or plain-language term such as “liquor,” “Ozempic,” or “massage.” The copilot will show related concepts, possible matches, affected venues, and why each result appeared.</p>
         </div>
         <div class="url-analysis-grid">
-          <div class="assistant-field"><label for="websiteUrl">Advertiser website URL</label><input id="websiteUrl" type="url" placeholder="https://advertiser.com"></div>
-          <div class="assistant-field"><label for="artworkUrl">Artwork image URL</label><input id="artworkUrl" type="url" placeholder="https://example.com/artwork.jpg"></div>
-        </div>
-        <p class="assistant-help">Provide either or both URLs. Website and image analysis require a deployed Netlify Function and a server-side OpenAI API key. The results supplement—not replace—the existing inquiry checker.</p>
-        <div id="urlAnalysisStatus" class="url-analysis-status" role="status" aria-live="polite"></div>
-        <div class="assistant-actions">
+  <div class="assistant-field"><label for="websiteUrl">Advertiser website URL</label><input id="websiteUrl" type="url" placeholder="https://advertiser.com"></div>
+  <div class="assistant-field"><label for="artworkUrl">Artwork image URL</label><input id="artworkUrl" type="url" placeholder="https://example.com/ad.jpg"></div>
+  <div class="assistant-field"><label for="artworkFile">Or upload artwork image (optional)</label><input id="artworkFile" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/gif"></div>
+</div>
+<p class="assistant-help">Free text-only website scan and image OCR (reads visible words, not visual subjects). Website/image URL retrieval uses a Netlify Function; OCR runs in your browser using free Tesseract.js. No OpenAI key or paid AI API. Unreadable content requires manual review.</p>
+<div id="urlAnalysisStatus" class="url-analysis-status" role="status" aria-live="polite"></div>
+<div class="assistant-actions">
           <div class="assistant-field">
             <label for="assistantVenue">Venue being considered</label>
             <select id="assistantVenue"><option value="">All venues / not selected</option></select>
@@ -851,46 +853,94 @@ document.getElementById('clear').addEventListener('click',()=>{
 
 render();
 
-// URL evidence is extracted server-side; the existing exclusion engine remains the source of policy matching.
-const urlAnalysisButton=document.getElementById('assistantAnalyze');
-const originalAnalyzeInquiry=analyzeInquiry;
-let urlEvidenceText='';
-function validPublicUrlInput(value){try{const u=new URL(value);return u.protocol==='https:'||u.protocol==='http:'}catch{return false}}
-async function analyzeUrlsAndInquiry(){
+// Free URL review: website extraction via Netlify Function; OCR runs locally in the browser.
+const freeReviewButton=document.getElementById('assistantAnalyze');
+const originalFreeReview=analyzeInquiry;
+let ocrScriptPromise;
+function isHttpUrl(value){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password;}catch{return false;}}
+function loadFreeOCR(){
+ if(window.Tesseract)return Promise.resolve(window.Tesseract);
+ if(ocrScriptPromise)return ocrScriptPromise;
+ ocrScriptPromise=new Promise((resolve,reject)=>{
+  const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+  s.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error('OCR library did not load'));
+  s.onerror=()=>reject(new Error('OCR library could not load. Check network or content blocking.'));
+  document.head.appendChild(s);
+ }).catch(e=>{ocrScriptPromise=null;throw e});return ocrScriptPromise;
+}
+async function runFreeURLReview(){
  const websiteUrl=document.getElementById('websiteUrl').value.trim();
  const artworkUrl=document.getElementById('artworkUrl').value.trim();
+ const file=document.getElementById('artworkFile').files[0];
  const status=document.getElementById('urlAnalysisStatus');
- if(!websiteUrl&&!artworkUrl){originalAnalyzeInquiry();return;}
- if((websiteUrl&&!validPublicUrlInput(websiteUrl))||(artworkUrl&&!validPublicUrlInput(artworkUrl))){status.textContent='Enter valid http(s) URLs.';return;}
- urlAnalysisButton.disabled=true;urlAnalysisButton.textContent='Analyzing URLs…';status.textContent='Retrieving and analyzing supplied URLs…';
+ if(!websiteUrl&&!artworkUrl&&!file){originalFreeReview();return;}
+ if((websiteUrl&&!isHttpUrl(websiteUrl))||(artworkUrl&&!isHttpUrl(artworkUrl))){status.textContent='Enter valid public http(s) URLs.';return;}
+ freeReviewButton.disabled=true;freeReviewButton.textContent='Checking URLs and artwork…';
+ const evidence=[],warnings=[];
  try{
-  const response=await fetch('/.netlify/functions/analyze-urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({websiteUrl,artworkUrl})});
-  const payload=await response.json().catch(()=>({error:'The server returned an unreadable response.'}));
-  if(!response.ok)throw new Error(payload.error||'URL analysis failed');
-  const blocks=[];
-  if(payload.website)blocks.push('WEBSITE ANALYSIS\n'+payload.website);
-  if(payload.artwork)blocks.push('ARTWORK ANALYSIS\n'+payload.artwork);
-  if(payload.warnings?.length)blocks.push('RETRIEVAL LIMITATIONS\n'+payload.warnings.join('\n'));
-  urlEvidenceText=blocks.join('\n\n');
-  const input=document.getElementById('assistantInquiry');
-  // Replace the previous extracted block rather than accumulating duplicate evidence.
-  input.value=input.value.replace(/\n?\n?--- URL ANALYSIS EVIDENCE START ---[\s\S]*?--- URL ANALYSIS EVIDENCE END ---/g,'').trim();
-  if(urlEvidenceText)input.value+=(input.value?'\n\n':'')+'--- URL ANALYSIS EVIDENCE START ---\n'+urlEvidenceText+'\n--- URL ANALYSIS EVIDENCE END ---';
-  status.textContent=payload.warnings?.length?'Analysis completed with limitations: '+payload.warnings.join('; '):'URL evidence extracted. Checking General and Venue Specific exclusions.';
-  originalAnalyzeInquiry();
-  const result=document.getElementById('assistantResult');
-  if(result.classList.contains('visible')){
-    const details=document.createElement('details');details.className='url-analysis-evidence';
-    const summary=document.createElement('summary');summary.textContent='View website and artwork evidence used in this assessment';
-    const pre=document.createElement('div');pre.textContent=urlEvidenceText||'No evidence could be extracted.';
-    details.append(summary,pre);result.prepend(details);
+  if(websiteUrl||artworkUrl){
+   status.textContent='Retrieving public webpage and artwork content…';
+   try{
+    const response=await fetch('/.netlify/functions/analyze-urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({websiteUrl,artworkUrl})});
+    const payload=await response.json().catch(()=>({error:'Unreadable server response'}));
+    if(!response.ok)throw new Error(payload.error||'Retrieval failed');
+    if(payload.website)evidence.push('WEBSITE TEXT: '+payload.website);
+    warnings.push(...(payload.warnings||[]));
+    if(artworkUrl){
+     if(payload.artworkData){
+      status.textContent='Reading visible text from artwork image (OCR)…';
+      try{
+       const T=await loadFreeOCR();
+       const result=await T.recognize(payload.artworkData,'eng');
+       const text=(result.data?.text||'').trim();
+       if(text)evidence.push('ARTWORK OCR TEXT: '+text.slice(0,12000));
+       else warnings.push('Artwork: OCR found no readable text; image subjects and logos were not evaluated.');
+      }catch(err){warnings.push('Artwork OCR: '+err.message);}
+     }else warnings.push('Artwork: image could not be retrieved for OCR.');
+    }
+   }catch(err){warnings.push('URL retrieval: '+err.message);}
   }
- }catch(err){status.textContent='URL analysis unavailable: '+err.message+'. The text-only checker is still available.';if(document.getElementById('assistantInquiry').value.trim())originalAnalyzeInquiry();}
- finally{urlAnalysisButton.disabled=false;urlAnalysisButton.textContent='Check for Exclusions';}
+  if(file){
+   if(file.size>8_000_000)warnings.push('Uploaded artwork exceeds the 8 MB limit.');
+   else{
+    status.textContent='Reading visible text from uploaded artwork…';
+    try{const T=await loadFreeOCR();const result=await T.recognize(file,'eng');const text=(result.data?.text||'').trim();
+     if(text)evidence.push('UPLOADED ARTWORK OCR TEXT: '+text.slice(0,12000));
+     else warnings.push('Uploaded artwork: no readable text found.');
+    }catch(err){warnings.push('Uploaded artwork OCR: '+err.message);}
+   }
+  }
+  const inquiry=document.getElementById('assistantInquiry');
+  const typed=inquiry.value;
+  if(evidence.length){
+   inquiry.value=[typed,...evidence].filter(Boolean).join('\n\n');
+   originalFreeReview();
+   inquiry.value=typed;
+  }else if(typed.trim())originalFreeReview();
+  else{
+   const r=document.getElementById('assistantResult');r.className='assistant-result visible decision-review';
+   r.innerHTML='<div class="result-summary"><div><div class="result-kicker">Manual review required</div><div class="result-title">No readable content extracted</div><div class="result-reason">The submitted source could not be evaluated. Provide a description or readable artwork.</div></div></div>';
+  }
+  const r=document.getElementById('assistantResult');
+  if(r.classList.contains('visible')){
+   if(warnings.length||artworkUrl||file){
+    // Do not imply an OCR-only review can clear artwork based on visuals.
+    if(!r.classList.contains('decision-likely')){
+     r.classList.remove('decision-clear');r.classList.add('decision-review');
+     const title=r.querySelector('.result-title');if(title&&title.textContent==='No clear exclusion found')title.textContent='No text match — manual visual review required';
+    }
+   }
+   const d=document.createElement('details');d.className='url-analysis-evidence';d.open=true;
+   const s=document.createElement('summary');s.textContent='Source evidence and scan limitations';
+   const p=document.createElement('div');p.textContent=[...evidence,...warnings.map(w=>'LIMITATION: '+w),'NOTE: OCR does not identify objects, logos, or implied visual themes. No match is not an approval.'].join('\n\n');
+   d.append(s,p);r.prepend(d);
+  }
+  status.textContent=evidence.length?'Completed. '+(warnings.length?warnings.length+' limitation(s) noted.':'Review the evidence and matching rules.'):'Manual review required: no readable evidence was extracted.';
+ }finally{freeReviewButton.disabled=false;freeReviewButton.textContent='Check for Exclusions';}
 }
-urlAnalysisButton.removeEventListener('click',analyzeInquiry);
-urlAnalysisButton.addEventListener('click',analyzeUrlsAndInquiry);
-document.getElementById('assistantReset').addEventListener('click',()=>{document.getElementById('websiteUrl').value='';document.getElementById('artworkUrl').value='';document.getElementById('urlAnalysisStatus').textContent='';urlEvidenceText='';});
+freeReviewButton.removeEventListener('click',analyzeInquiry);
+freeReviewButton.addEventListener('click',()=>runFreeURLReview().catch(err=>{document.getElementById('urlAnalysisStatus').textContent='Review error: '+err.message;}));
+document.getElementById('assistantReset').addEventListener('click',()=>{document.getElementById('websiteUrl').value='';document.getElementById('artworkUrl').value='';document.getElementById('artworkFile').value='';document.getElementById('urlAnalysisStatus').textContent='';});
 </script>
 </body>
 </html>
