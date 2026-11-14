@@ -51,7 +51,40 @@ export async function handler(event){
  if(!websiteUrl&&!artworkUrl)return json(400,{error:'Provide a website or artwork URL.'});
  const out={website:'',websiteMeta:{},artworkData:'',warnings:[]};
  if(websiteUrl){try{const page=await fetchPublic(websiteUrl);if(!page.type.includes('text/html')&&!page.type.includes('text/plain'))throw Error('Website did not return HTML or plain text');if(page.type.includes('text/html')){const extracted=extractHtml(page.bytes.toString('utf8'));out.website=extracted.text;out.websiteMeta=extracted.meta;}else out.website=page.bytes.toString('utf8').slice(0,20000);if(!out.website)throw Error('No readable website text');}catch(e){out.warnings.push('Website: '+e.message);}}
- if(artworkUrl){try{const img=await fetchPublic(artworkUrl);const match=img.type.match(/^image\/(png|jpeg|webp|gif|bmp)(?:;|$)/);if(!match)throw Error('Artwork URL must return a supported image');out.artworkData=`data:image/${match[1]};base64,${img.bytes.toString('base64')}`;}catch(e){out.warnings.push('Artwork: '+e.message);}}
- if(!out.website&&!out.artworkData)return json(422,{error:out.warnings.join('; ')||'No content could be retrieved'});
+ if(artworkUrl){
+  try{
+   let img=await fetchPublic(artworkUrl);
+   let source='direct image';
+   // Many image-hosting share URLs return an HTML preview page, not image bytes.
+   // Resolve only explicit image metadata; never guess arbitrary assets on a page.
+   if(img.type.includes('text/html')){
+    const html=img.bytes.toString('utf8');
+    const metaTags=[...html.matchAll(/<meta\b[^>]*>/gi)].map(m=>m[0]);
+    let candidate='';
+    for(const tag of metaTags){
+     const property=(tag.match(/(?:property|name)\s*=\s*["']([^"']+)["']/i)||[])[1]||'';
+     if(!/^(og:image(?::secure_url|:url)?|twitter:image(?::src)?)$/i.test(property))continue;
+     const value=(tag.match(/content\s*=\s*["']([^"']+)["']/i)||[])[1];
+     if(value){candidate=value.replace(/&amp;/gi,'&');break;}
+    }
+    if(!candidate)throw Error('Artwork URL opens an HTML preview without a discoverable image. Use a direct image link or upload the file.');
+    img=await fetchPublic(new URL(candidate,img.url).href);
+    source='image discovered from preview metadata';
+   }
+   const b=img.bytes;
+   let format='';
+   if(b.length>=8&&b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))format='png';
+   else if(b.length>=3&&b[0]===255&&b[1]===216&&b[2]===255)format='jpeg';
+   else if(b.length>=12&&b.toString('ascii',0,4)==='RIFF'&&b.toString('ascii',8,12)==='WEBP')format='webp';
+   else if(b.length>=6&&['GIF87a','GIF89a'].includes(b.toString('ascii',0,6)))format='gif';
+   else if(b.length>=2&&b.toString('ascii',0,2)==='BM')format='bmp';
+   if(!format)throw Error('The URL did not return valid PNG, JPG, WEBP, GIF, or BMP image bytes. Upload the artwork file instead.');
+   out.artworkData=`data:image/${format};base64,${b.toString('base64')}`;
+   out.artworkSource=source;
+  }catch(e){out.warnings.push('Artwork: '+e.message);}
+ }
+
+ // Return source-specific warnings without failing the entire review. The browser can show manual-review guidance.
+ if(!out.website&&!out.artworkData)out.warnings.push('No readable URL content was retrieved. Use artwork upload or enter inquiry text for manual screening.');
  return json(200,out);
 }

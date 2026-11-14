@@ -91,7 +91,7 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 .assistant-status{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(255,255,255,.28);border-radius:999px;font-size:12px;white-space:nowrap}
 .assistant-status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand-lime)}
 .assistant-body{padding:22px 24px}
-.assistant-form{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;align-items:end}
+.assistant-form{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;align-items:start}
 .assistant-field label{display:block;margin:0 0 7px;color:var(--brand-plum);font-weight:500;font-size:13px}
 .assistant-field textarea{width:100%;min-height:112px;resize:vertical;border:1px solid #c8becb;border-radius:9px;padding:13px 14px;font:500 15px/1.5 "Museo Sans",MuseoSans,"Avenir Next",Avenir,Arial,sans-serif;color:var(--ink);background:#fff}
 .assistant-actions{display:grid;gap:10px}
@@ -937,6 +937,7 @@ async function runFreeURLReview(){
      evidence.push('WEBSITE TEXT: '+payload.website);
     }
     warnings.push(...(payload.warnings||[]));
+    if(payload.artworkSource==='image discovered from preview metadata')evidence.push('ARTWORK SOURCE: Resolved image from preview page metadata.');
     if(artworkUrl){
      if(payload.artworkData){
       status.textContent='Reading visible text from artwork image (OCR)…';
@@ -947,7 +948,7 @@ async function runFreeURLReview(){
        if(text)evidence.push('ARTWORK OCR TEXT: '+text.slice(0,12000));
        else warnings.push('Artwork: OCR found no readable text; image subjects and logos were not evaluated.');
       }catch(err){warnings.push('Artwork OCR: '+err.message);}
-     }else warnings.push('Artwork: image could not be retrieved for OCR.');
+     }else if(!(payload.warnings||[]).some(w=>w.startsWith('Artwork:'))) warnings.push('Artwork: image could not be retrieved for OCR.');
     }
    }catch(err){warnings.push('URL retrieval: '+err.message);}
   }
@@ -987,7 +988,7 @@ async function runFreeURLReview(){
    const p=document.createElement('div');p.textContent=[...evidence,...warnings.map(w=>'LIMITATION: '+w),'NOTE: OCR does not identify objects, logos, or implied visual themes. No match is not an approval.'].join('\n\n');
    d.append(s,p);r.prepend(d);
   }
-  status.textContent=evidence.length?'Completed. '+(warnings.length?warnings.length+' limitation(s) noted.':'Review the evidence and matching rules.'):'Manual review required: no readable evidence was extracted.';
+  status.textContent=evidence.length?'Completed. '+(warnings.length?warnings.length+' limitation(s) noted.':'Review the evidence and matching rules.'):'Manual review required: no readable evidence was extracted. '+(warnings[0]||'');
  }finally{freeReviewButton.disabled=false;freeReviewButton.textContent='Check for Exclusions';}
 }
 freeReviewButton.removeEventListener('click',analyzeInquiry);
