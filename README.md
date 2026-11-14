@@ -25,3 +25,5 @@ The Compliance Copilot now displays a **Website theme & business summary** ahead
 
 ## Artwork link handling
 Artwork URL must serve an actual image (PNG/JPEG/WEBP/GIF/BMP), not a Dropbox/Drive preview, gallery page, or login screen. If a link is not an image, the app now shows a manual-review warning instead of failing the entire scan. Website analysis can still complete independently. You can upload an image file directly using Artwork upload.
+
+Update: Text-only category equivalence receives strong scores; each matching policy row has independent locally saved reviewer feedback. Artwork scoring remains weighted.
