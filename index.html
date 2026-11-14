@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="en">
-<head>
+<html lang="en" data-scribe-recorder-ready="true"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Venue Exclusion Directory</title>
@@ -237,7 +236,7 @@ header h1,
 </style>
 
 </head>
-<body>
+<body class="share-only">
 <header>
   <div class="header-inner">
     <h1>Venue Exclusion Directory</h1>
@@ -245,16 +244,16 @@ header h1,
   </div>
 </header>
 
-<div class="mode-bar owner-only">
+<div class="mode-bar owner-only" hidden="" aria-hidden="true">
   <span class="mode-pill">Owner editing mode</span>
   <button id="previewShare" class="secondary" type="button">Preview locked view</button>
-  <button id="exportShare" class="primary" type="button">Download shareable copy</button>
+  <button id="exportShare" class="primary" type="button" disabled="">Preparing download…</button>
 </div>
 
 <main>
 
 
-  <section class="editor-panel owner-only" aria-labelledby="editorTitle">
+  <section class="editor-panel owner-only" aria-labelledby="editorTitle" hidden="" aria-hidden="true">
     <div class="editor-head">
       <div><h2 id="editorTitle">Exclusion Editor</h2><p>Add new general or venue-specific exclusions. Saved changes remain in this browser and are included in exported shareable copies.</p></div>
       <span class="mode-pill">Private controls</span>
@@ -262,7 +261,7 @@ header h1,
     <div class="editor-body">
       <div class="editor-grid">
         <div class="editor-field"><label for="editScope">Exclusion scope</label><select id="editScope"><option value="general">General — all venues</option><option value="venue">Venue-specific</option></select></div>
-        <div class="editor-field"><label for="editVenue">Venue</label><select id="editVenue" disabled></select></div>
+        <div class="editor-field"><label for="editVenue">Venue</label><select id="editVenue" disabled=""><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="CVS">CVS</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select></div>
         <div class="editor-field wide"><label for="editTitle">Exclusion title</label><input id="editTitle" type="text" placeholder="Example: Alcohol delivery services"></div>
         <button id="addExclusion" class="primary" type="button">Add exclusion</button>
         <div class="editor-field wide" style="grid-column:1/-1"><label for="editNote">Policy details, exceptions, or qualifying language</label><textarea id="editNote" placeholder="Add the complete policy wording so the Copilot can cross-reference it."></textarea></div>
@@ -272,15 +271,15 @@ header h1,
         <button id="saveBackup" class="secondary" type="button">Download editable backup</button>
         <button id="clearCustom" class="danger" type="button">Remove all added exclusions</button>
       </div>
-      <details class="manage-list"><summary>Manage added exclusions</summary><div id="customList"></div></details>
+      <details class="manage-list"><summary>Manage added exclusions</summary><div id="customList"><p class="editor-feedback">No added exclusions yet.</p></div></details>
       <div class="editor-actions" style="margin-top:22px"><h3 style="margin:0">Additional Information</h3></div>
       <div class="editor-grid">
-        <div class="editor-field"><label for="additionalVenue">Venue</label><select id="additionalVenue"></select></div>
+        <div class="editor-field"><label for="additionalVenue">Venue</label><select id="additionalVenue"><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="CVS">CVS</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select></div>
         <div class="editor-field wide"><label for="additionalText">New information line</label><textarea id="additionalText" placeholder="Enter a new bullet-point line for this venue"></textarea></div>
         <button id="addAdditionalInformation" class="primary" type="button">Add Additional Information</button>
       </div>
       <p id="additionalFeedback" class="editor-feedback" aria-live="polite">New lines appear under Additional Information for the selected venue.</p>
-      <details class="manage-list"><summary>Manage additional information</summary><div id="additionalList"></div></details>
+      <details class="manage-list"><summary>Manage additional information</summary><div id="additionalList"><p class="editor-feedback">No additional information added yet.</p></div></details>
 
     </div>
   </section>
@@ -310,17 +309,17 @@ header h1,
 <div class="assistant-actions">
           <div class="assistant-field">
             <label for="assistantVenue">Venue being considered</label>
-            <select id="assistantVenue"><option value="">All venues / not selected</option></select>
+            <select id="assistantVenue"><option value="">All venues / not selected</option><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="CVS">CVS</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select>
           </div>
           <button id="assistantAnalyze" class="primary" type="button">Check for Exclusions</button>
           <button id="assistantReset" class="secondary" type="button">Reset assistant</button>
         </div>
       </div>
       <div id="assistantResult" class="assistant-result" aria-live="polite"></div>
-      <details class="learning-panel">
+      <details class="learning-panel" hidden="" aria-hidden="true">
         <summary>Learning mode: add a test synonym</summary>
         <div class="learning-grid">
-          <div class="assistant-field"><label for="learningConcept">Concept</label><select id="learningConcept"></select></div>
+          <div class="assistant-field"><label for="learningConcept">Concept</label><select id="learningConcept"><option value="Alcohol &amp; Liquor">Alcohol &amp; Liquor</option><option value="Prescription Drugs &amp; Pharmacy">Prescription Drugs &amp; Pharmacy</option><option value="Weight Loss &amp; Wellness">Weight Loss &amp; Wellness</option><option value="Massage &amp; Therapy">Massage &amp; Therapy</option><option value="Cannabis &amp; Hemp">Cannabis &amp; Hemp</option><option value="Tobacco &amp; Vaping">Tobacco &amp; Vaping</option><option value="Gambling &amp; Gaming">Gambling &amp; Gaming</option><option value="Pet Products &amp; Services">Pet Products &amp; Services</option><option value="Medical Clinics &amp; Testing">Medical Clinics &amp; Testing</option><option value="Supplements &amp; Vitamins">Supplements &amp; Vitamins</option><option value="Hiring &amp; Recruitment">Hiring &amp; Recruitment</option><option value="Political Activity">Political Activity</option><option value="Religious Organizations">Religious Organizations</option><option value="Weapons &amp; Firearms">Weapons &amp; Firearms</option><option value="Adult Entertainment">Adult Entertainment</option><option value="Legal Services">Legal Services</option><option value="Funeral Services">Funeral Services</option></select></div>
           <div class="assistant-field"><label for="learningTerm">New synonym or phrase</label><input id="learningTerm" type="text" placeholder="Example: package store"></div>
           <button id="learningAdd" class="secondary" type="button">Add for this session</button>
         </div>
@@ -332,7 +331,7 @@ header h1,
   <div id="venueView">
   <div class="toolbar">
     <input id="search" class="search" type="search" placeholder="Search exclusions, notes, venue names, or subsidiaries…">
-    <select id="venueFilter"><option value="">All venues</option></select>
+    <select id="venueFilter"><option value="">All venues</option><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="CVS">CVS</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select>
     <select id="sort">
       <option value="venue">Sort by venue</option>
       <option value="count-desc">Most exclusions first</option>
@@ -344,21 +343,1417 @@ header h1,
   </div>
 
   <div class="metrics">
-    <div class="metric"><span>Venues shown</span><b id="venueCount">0</b></div>
-    <div class="metric"><span>Matching exclusions</span><b id="matchCount">0</b></div>
-    <div class="metric"><span>General exclusions</span><b id="generalCount">0</b></div>
+    <div class="metric"><span>Venues shown</span><b id="venueCount">11</b></div>
+    <div class="metric"><span>Matching exclusions</span><b id="matchCount">240</b></div>
+    <div class="metric"><span>General exclusions</span><b id="generalCount">23</b></div>
   </div>
 
   <div class="notice"><strong>Important:</strong> General exclusions are listed separately at the top of the directory and apply across venues unless a venue explicitly allows an exception. Each venue card below shows only that venue’s specific exclusions, allowances, and selling notes.</div>
 
-  <div id="results" class="results"></div>
+  <div id="results" class="results">
+    <article class="card general-exclusions-card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>General Exclusions</h2>
+          <div class="badges"><span class="badge">Applies across venues unless specifically allowed</span></div>
+        </div>
+        <div class="card-meta">
+          <div class="count">23 exclusions</div>
+          <div class="chevron" aria-hidden="true">⌄</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <section class="card-section">
+          <div class="section-title">General exclusions</div>
+          <div class="exclusion-grid">
+            
+              <div class="exclusion">
+                <strong>Abortion Clinics</strong>
+                <span class="note">No health clinics that specialize in abortion.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Adult Shops or Adult Entertainment</strong>
+                <span class="note">Includes adult video and lingerie shops that sell sexually oriented "toys"; Victoria’s Secret is permitted.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Advertising Content Standards</strong>
+                <span class="note">No racist, sexist, obscene, violent, discriminatory, insensitive, or otherwise offensive advertising.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Attorneys — Slip &amp; Fall or Employment</strong>
+                <span class="note">Family law, trusts, wills, divorce, bankruptcy, and immigration are permitted.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Bail Bonds</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Cannabis Stores / Cannabis Products</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Cemeteries / Funeral Services</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Direct Competitors</strong>
+                <span class="note">Direct competitors with the venue in question are excluded.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Donation Solicitations</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Gender Transition Services / Medication</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Grocery / Drug / Mass Merchandise Retailers</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Hiring Ads</strong>
+                <span class="note">Must require certification, license, or degree and cannot directly compete with the store.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Illegal Activity &amp; Drugs</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Massage Parlors</strong>
+                <span class="note">Therapeutic massage and spa-type massage are permitted.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>No Dollar-Off Advertising</strong>
+                <span class="note">Applies to items sold in the venue.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Pet Supplies</strong>
+                <span class="note">Must be dollar-off service only; no pet food.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Pharmacies</strong>
+                <span class="note">Excluded when there is a pharmacy in the venue.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Political Activities</strong>
+                <span class="note">Includes organizing political actions, soliciting contributions, promoting candidates, and advocating ballot initiatives.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Political Organizations or Candidates</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Religious Groups / Organizations / Schools / Bookstores / Churches</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Tobacco / Smoke / Cigar / Vapor Shops</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Vitamin Stores</strong>
+                <span class="note">Examples include GNC.</span>
+                <div class="badge scope-badge">General</div>
+              </div>
+              <div class="exclusion">
+                <strong>Weapons, Firearms &amp; Ammunition</strong>
+                
+                <div class="badge scope-badge">General</div>
+              </div>
+          </div>
+        </section>
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Ahold</h2>
+          <div class="badges"><span class="badge">Giant</span><span class="badge">Stop &amp; Shop</span><span class="badge">GIANT</span><span class="badge">Food Lion</span><span class="badge">bFresh</span><span class="badge">MARTIN'S</span></div>
+        </div>
+        <div class="card-meta"><div class="count">23 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        <section class="card-section"><div class="section-title">Selling information</div><ul><li>Advertising is available in Ahold pharmacy areas.</li><li>Food Lion is sellable only for national CPG campaigns.</li></ul></section>
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Abortion Clinics</strong>
+        <span class="note">No health clinics who specialize in abortion.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Adult Shops or Adult Entertainment</strong>
+        <span class="note">Includes adult video and lingerie shops that sell sexually oriented "toys"; Victoria Secret is OK.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Attorneys — Slip &amp; Fall or Employment</strong>
+        <span class="note">Family law, trusts, wills, divorce, bankruptcy, and immigration are OK.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bail Bonds</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cannabis Stores / Cannabis Products</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cemeteries / Funeral Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Direct Competitors</strong>
+        <span class="note">Direct competitors with the venue in question are excluded.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Donation Solicitations</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pharmacies</strong>
+        <span class="note">If there’s a pharmacy in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gender Transition Services / Medication</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gas Stations</strong>
+        <span class="note">Service &amp; repair without gas dispensing permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hiring Ads</strong>
+        <span class="note">Must require certification, license, or degree and can’t be in direct competition of store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Grocery / Drug / Mass Merchandise Retailers</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Illegal Activity &amp; Drugs</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Massage Parlors</strong>
+        <span class="note">Therapeutic massage and spa-type massage are OK.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>No Dollar-Off Advertising</strong>
+        <span class="note">Applies to items sold in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Supplies</strong>
+        <span class="note">Any pet supply must be dollar-off service; no pet food.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Activities</strong>
+        <span class="note">Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Organizations or Candidates</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Religious Groups / Organizations / Schools / Bookstores / Churches</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tobacco / Smoke / Cigar / Vapor Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Vitamin Stores</strong>
+        <span class="note">Examples include GNC.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Weapons, Firearms &amp; Ammunition</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Albertsons / Safeway</h2>
+          <div class="badges"><span class="badge">Vons</span><span class="badge">Jewel-Osco</span><span class="badge">Pavilions</span><span class="badge">Acme</span><span class="badge">Andronico's</span><span class="badge">Haggen</span><span class="badge">Balducci's</span><span class="badge">Kings</span><span class="badge">Amigos</span><span class="badge">United Supermarkets</span><span class="badge">Shaw's</span><span class="badge">Carrs</span><span class="badge">Pak'nSave</span><span class="badge">Tom Thumb</span><span class="badge">Save Mart</span></div>
+        </div>
+        <div class="card-meta"><div class="count">21 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Abortion Clinics</strong>
+        <span class="note">No health clinics that specialize in abortion.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Adult Shops or Adult Entertainment</strong>
+        <span class="note">Includes adult video and lingerie shops that sell sexually oriented "toys"; Victoria’s Secret is permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Attorneys — Slip &amp; Fall or Employment</strong>
+        <span class="note">Family law, trusts, wills, divorce, bankruptcy, and immigration are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bail Bonds</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cannabis Stores / Cannabis Products</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cemeteries / Funeral Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Direct Competitors</strong>
+        <span class="note">Direct competitors with the venue in question are excluded.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Donation Solicitations</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pharmacies</strong>
+        <span class="note">If there’s a pharmacy in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gender Transition Services / Medication</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hiring Ads</strong>
+        <span class="note">Must require certification, license, or degree and cannot be in direct competition with the store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Grocery / Drug / Mass Merchandise Retailers</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Massage Parlors</strong>
+        <span class="note">Therapeutic massage and spa-type massage are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>No Dollar-Off Advertising</strong>
+        <span class="note">Applies to items sold in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Illegal Activity &amp; Drugs</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Supplies</strong>
+        <span class="note">Any pet supply must be dollar-off service; no pet food.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Activities</strong>
+        <span class="note">Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Organizations or Candidates</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tobacco / Smoke / Cigar / Vapor Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Vitamin Stores</strong>
+        <span class="note">Examples include GNC.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Weapons, Firearms &amp; Ammunition</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>CVS</h2>
+          <div class="badges"><span class="badge">CVS Pharmacy y más</span><span class="badge">Navarro Discount Pharmacy</span></div>
+        </div>
+        <div class="card-meta"><div class="count">19 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Alcohol Bottlers</strong>
+        <span class="note">No ads purchased by beer, wine, or hard-liquor companies.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Chiropractors</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Clinical Trials</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Contests or Sweepstakes</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>CoolSculpting / Body Sculpting</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Dollar Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gambling, Lottery, Fantasy Sports &amp; Real-Money Gaming</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Claims or Clinical Trials</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hospitals, ERs, Health Clinics, Urgent Care, Primary Care &amp; Invasive Procedures</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Insurance</strong>
+        <span class="note">No Medicare Part D providers; applies to Aetna and SilverScript.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hearing Aid Companies</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hormone Therapy</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Ketamine Therapy</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Medical Weight Loss</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Mental Health Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pharmacies</strong>
+        <span class="note">If there is a pharmacy in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Sleep Clinics</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Virtual or Online Social Programs</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Wellness Companies</strong>
+        <span class="note">Includes IV drip services.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Giant Eagle</h2>
+          <div class="badges"></div>
+        </div>
+        <div class="card-meta"><div class="count">23 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        <section class="card-section"><div class="section-title">Selling information</div><ul><li>All medical ads must include the words “not endorsed by Giant Eagle.”</li></ul></section>
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Auto Supply Stores</strong>
+        <span class="note">Permitted, but offers cannot apply to car-cleaning products or accessories sold by the store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bagel Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Banks</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Card Shops</strong>
+        <span class="note">Gift shops are permitted; greeting-card offers are not.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Car Washes</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Carpet Cleaning Rentals</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Chicken Restaurants</strong>
+        <span class="note">Fast-food establishments are permitted; takeout-only is not.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Christmas Trees</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Coffee Shops</strong>
+        <span class="note">Only when an in-store fresh-brewed coffee retailer exists.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Drug Committees</strong>
+        <span class="note">Example: legalized marijuana advocacy.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Dry Cleaners and Laundry Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Espresso-Type Shops / Carts</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Film Developing</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Supplies</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Headshops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Ice Cream / Yogurt</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Meat / Seafood Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Medicare / Medicaid</strong>
+        <span class="note">Health insurance is permitted, but this category may not be offered.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Nurseries / Floral Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Office Supply Stores</strong>
+        <span class="note">No competing products; color copies are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Produce Stands / Farmers Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Sub Shops / Delis / Sandwich Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>H-E-B</h2>
+          <div class="badges"><span class="badge">Joe V's Smart Shop</span><span class="badge">Mi Tienda</span></div>
+        </div>
+        <div class="card-meta"><div class="count">22 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>800 / 900 Number Businesses</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Alcohol</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Animal Breeders or Animal Sales</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Any Home-Based Businesses</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bakeries</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Butcher Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Car Washes</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cellular Phones</strong>
+        <span class="note">Only when the H-E-B store has one; H-E-B supplies the updated list.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Farmers Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Florists</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gambling, Lottery, Fantasy Sports &amp; Real-Money Gaming</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gas Stations</strong>
+        <span class="note">Service and repair without gas dispensing is permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>H-E-B Competitors</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Ketamine Therapy</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Meat Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Multi-Level Marketing</strong>
+        <span class="note">Examples include Avon or Amway.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Photo Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Psychics</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Restaurants / Food</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tattoo / Tattoo Removal</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Weight Loss</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Weight Loss Injectables</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Hy-Vee</h2>
+          <div class="badges"><span class="badge">Fresh Market</span></div>
+        </div>
+        <div class="card-meta"><div class="count">8 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Bakeries</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Banks</strong>
+        <span class="note">Only when the store has a bank.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Butcher Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gas Stations</strong>
+        <span class="note">Service and repair without gas dispensing is permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Clinics, Urgent Care &amp; Primary Doctors</strong>
+        <span class="note">Hospitals and ERs are permitted unless they provide outpatient pharmacies.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Meat Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pharmacies</strong>
+        <span class="note">Only when the store has a pharmacy inside.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Religious Groups / Organizations / Schools / Bookstores / Churches</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Kroger</h2>
+          <div class="badges"><span class="badge">Harris Teeter</span><span class="badge">Ralphs</span><span class="badge">Smith's</span><span class="badge">Fry's</span><span class="badge">King Soopers</span><span class="badge">Mariano's</span><span class="badge">Pick'n Save</span><span class="badge">QFC</span><span class="badge">Fred Meyer</span><span class="badge">Foods Co.</span><span class="badge">Food 4 Less</span><span class="badge">City Market</span><span class="badge">Ruler</span><span class="badge">Kroger Marketplace</span><span class="badge">Metro Market</span><span class="badge">Jay C</span><span class="badge">Gerbes</span><span class="badge">Dillons</span><span class="badge">Pay Less</span></div>
+        </div>
+        <div class="card-meta"><div class="count">23 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>800 / 900 Number Businesses</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Alcohol Bottlers</strong>
+        <span class="note">No ads purchased by beer, wine, or hard-liquor companies.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bakeries</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Banks</strong>
+        <span class="note">Only when the store has a bank.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Butcher Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Carpet Cleaning Rentals</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Club Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Coffee Shops</strong>
+        <span class="note">Only when the store has Starbucks or another coffee shop in-store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>CPG Ads of Any Kind</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Credit Cards</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Dollar Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Drug / GM Retailers</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Florists</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gas Stations</strong>
+        <span class="note">Service and repair without gas dispensing is permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Grab &amp; Go</strong>
+        <span class="note">Prepackaged food items and meal kits.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Clinics, Urgent Care &amp; Primary Doctors</strong>
+        <span class="note">Hospitals and ERs are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Insurance</strong>
+        <span class="note">No Medicare in select counties listed in the PDF.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Internet</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Jewelry Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Money Orders, Money Wiring Services &amp; Coinstar</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Natural Food Centers</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Prepaid Phones &amp; Wireless Cards</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Psychics</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        <section class="card-section"><div class="section-title">Kroger Medicare county restrictions</div><p class="county-list"><strong>Colorado:</strong> Adams, Douglas, Jefferson, Larimer, Weld, El Paso, Delta, Broomfield, Arapahoe, Pueblo, Denver, Mesa, Summit, Boulder, Routt, Teller</p><p class="county-list"><strong>Idaho:</strong> Twin Falls, Ada, Canyon, Cassia</p><p class="county-list"><strong>Nevada:</strong> Clark, Nye, Douglas</p><p class="county-list"><strong>Utah:</strong> Salt Lake, Davis, Utah, Cache, Weber, Box Elder, Summit, Iron, Washington, Wasatch</p></section>
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>LA Fitness</h2>
+          <div class="badges"><span class="badge">Esporta Fitness</span><span class="badge">City Sports Club</span></div>
+        </div>
+        <div class="card-meta"><div class="count">14 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        <section class="card-section"><div class="section-title">Selling information</div><ul><li>A minimum of 10 kiosks must be purchased; only one must be in an LA Fitness location.</li><li>Each store averages six kiosks throughout the gym floor plan.</li></ul></section>
+        
+        <section class="card-section"><div class="section-title">Explicitly allowed</div><ul><li>Vitamin Stores</li><li>Religious Groups / Organizations / Schools / Bookstores / Churches</li></ul></section>
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Alcohol Bottlers</strong>
+        <span class="note">No ads purchased by beer, wine, or hard-liquor companies.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Advertising Content Standards</strong>
+        <span class="note">No racist, sexist, obscene, violent, discriminatory, insensitive or otherwise offensive advertising.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cannabis</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cigarettes</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Dating Applications / Websites</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Erectile Dysfunction Medication</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Feminine Hygiene Products</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>General Weight Loss Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Liquor</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Nutritional Supplements</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Prescription Opioids</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Competitive Medical Service Providers</strong>
+        <span class="note">Includes chiropractors, massage therapists, physical therapists and others offering personal training, group exercise or competing services.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Spa Services and Related Amenities</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tanning Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Quest Diagnostics</h2>
+          <div class="badges"></div>
+        </div>
+        <div class="card-meta"><div class="count">21 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        <section class="card-section"><div class="section-title">Selling information</div><ul><li>Only a top advertisement is available; no bottom artwork.</li></ul></section>
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Abortion Clinics</strong>
+        <span class="note">No health clinics who specialize in abortion.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Testing and Lab Offerings from Other Labs</strong>
+        <span class="note">Examples include Labcorp.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Adult Shops or Adult Entertainment</strong>
+        <span class="note">Includes adult video and lingerie shops that sell sexually oriented "toys"; Victoria Secret is OK.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Attorneys — Slip &amp; Fall or Employment</strong>
+        <span class="note">Family law, trusts, wills, divorce, bankruptcy, and immigration are okay.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bail Bonds</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cannabis Stores / Cannabis Products</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Cemeteries / Funeral Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Direct Competitors</strong>
+        <span class="note">Direct competitors with the venue in question are excluded.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Donation Solicitations</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gender Transition Services / Medication</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hiring Ads</strong>
+        <span class="note">Must require certification, license, or degree and can't be in direct competition of store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Plan Promotions</strong>
+        <span class="note">Health plan promotions that encourage switching plans or favor one plan over another are excluded.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Illegal Activity &amp; Drugs</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Massage Parlors</strong>
+        <span class="note">Therapeutic massage and spa-type massage are OK.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>No Dollar-Off Advertising</strong>
+        <span class="note">Applies to items sold in the venue.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Supplies</strong>
+        <span class="note">Any pet supply must be dollar-off service; no pet food.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Activities</strong>
+        <span class="note">Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Political Organizations or Candidates</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Religious Groups / Organizations / Schools / Bookstores / Churches</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tobacco / Smoke / Cigar / Vapor Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Vitamin Stores</strong>
+        <span class="note">Examples include GNC.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>Strack &amp; Van Til</h2>
+          <div class="badges"></div>
+        </div>
+        <div class="card-meta"><div class="count">20 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        <section class="card-section"><div class="section-title">Selling information</div><ul><li>Shopper-marketing CPG may only be sold with Hy-Vee pre-approval.</li></ul></section>
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Alcohol Bottlers</strong>
+        <span class="note">No ads purchased by beer, wine, or hard-liquor companies.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Bakeries</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Banks, Credit Unions or Check Cashing / Loans</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Beauty Supplies</strong>
+        <span class="note">Beauty salons are permitted; no competing product offers.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Body Piercing / Tattoo Parlors</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Chiropractors</strong>
+        <span class="note">Licensed chiropractors are permitted if they do not advertise work-related accidents.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Convenience Stores / Gas Stations</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Exercise Equipment and Footwear</strong>
+        <span class="note">Apparel or non-competing services are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Florists</strong>
+        <span class="note">Only if the location has a floral department.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Fuel Offers</strong>
+        <span class="note">Only if the location offers fuel; repair, inspection and smog certification are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Grocery / Drug / Mass Merchandise Retailers</strong>
+        <span class="note">Includes no mention of them.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Health Food Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Hiring Ads</strong>
+        <span class="note">Must require certification, license, or degree and cannot directly compete with the store.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Ice Cream Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Meat Markets / Butcher Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>No Dollar-Off Purchase Ads</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Palm Readers</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Food Stores</strong>
+        <span class="note">Pet stores and pet-service businesses are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Quick-Service Restaurants</strong>
+        <span class="note">Very limited menu, precooked or quickly prepared food, and takeout operations.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Seafood Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article><article class="card ">
+      <div class="card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="card-title-wrap">
+          <h2>The Save Mart Companies</h2>
+          <div class="badges"><span class="badge">Lucky</span><span class="badge">FoodMaxx</span><span class="badge">Save Mart</span><span class="badge">Roth's Fresh Markets</span></div>
+        </div>
+        <div class="card-meta"><div class="count">23 exclusions</div><div class="chevron" aria-hidden="true">⌄</div></div>
+      </div>
+      <div class="card-body">
+        
+        
+        
+        <section class="card-section"><div class="section-title">Venue-specific exclusions</div>
+        <div class="exclusion-grid">
+      <div class="exclusion">
+        <strong>Bakeries</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Beauty Supplies</strong>
+        <span class="note">Beauty salons are permitted; no competing product offers.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Chiropractors</strong>
+        <span class="note">Permitted if they do not advertise work-related accidents.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Curbside Pickup</strong>
+        <span class="note">Competitive activities that would take traffic away from stores.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Dollar Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Drug Committees or Cannabis Businesses</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Drug Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Ecommerce</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Florists</strong>
+        <span class="note">If the store has a floral department.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Fuel Offers</strong>
+        <span class="note">Repair, inspection and smog certification only.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Gambling</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Home Delivery Services</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Liquor Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Meat Markets</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Misleading Claims</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Occult and Paranormal</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pet Food Stores</strong>
+        <span class="note">Pet stores and pet-service businesses are permitted.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Pharmacies</strong>
+        <span class="note">Vaccination and immunization clinics.</span>
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Sandwich Shops</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Seafood Stores</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Smoking Cessation</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Tanning Salons</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div>
+      <div class="exclusion">
+        <strong>Vape Shops / Marijuana / CBD / Hemp Products</strong>
+        
+        <div class="badge scope-badge">Venue-specific</div>
+      </div></div></section>
+        
+      </div>
+    </article></div>
   </div>
 
 
 </main>
 <footer>Source: Terraboost Venue Exclusion List, March 2026. Always confirm uncertain or location-specific cases with a sales director.</footer>
 
-<script>
+<script data-export-payload="true">window.__EMBEDDED_CUSTOM__=[];window.__EMBEDDED_ADDITIONAL__=[];window.__LOCKED_SHARE__=true;window.__EXPORT_BUILD__="2026-11-14T13:33:08.734Z";</script><script>
 const DATA = {"general":[["Abortion Clinics","No health clinics that specialize in abortion."],["Adult Shops or Adult Entertainment","Includes adult video and lingerie shops that sell sexually oriented \"toys\"; Victoria’s Secret is permitted."],["Advertising Content Standards","No racist, sexist, obscene, violent, discriminatory, insensitive, or otherwise offensive advertising."],["Attorneys — Slip & Fall or Employment","Family law, trusts, wills, divorce, bankruptcy, and immigration are permitted."],["Bail Bonds",""],["Cannabis Stores / Cannabis Products",""],["Cemeteries / Funeral Services",""],["Direct Competitors","Direct competitors with the venue in question are excluded."],["Donation Solicitations",""],["Gender Transition Services / Medication",""],["Grocery / Drug / Mass Merchandise Retailers",""],["Hiring Ads","Must require certification, license, or degree and cannot directly compete with the store."],["Illegal Activity & Drugs",""],["Massage Parlors","Therapeutic massage and spa-type massage are permitted."],["No Dollar-Off Advertising","Applies to items sold in the venue."],["Pet Supplies","Must be dollar-off service only; no pet food."],["Pharmacies","Excluded when there is a pharmacy in the venue."],["Political Activities","Includes organizing political actions, soliciting contributions, promoting candidates, and advocating ballot initiatives."],["Political Organizations or Candidates",""],["Religious Groups / Organizations / Schools / Bookstores / Churches",""],["Tobacco / Smoke / Cigar / Vapor Shops",""],["Vitamin Stores","Examples include GNC."],["Weapons, Firearms & Ammunition",""]],"venues":[{"venue":"Ahold","subsidiaries":["Giant","Stop & Shop","GIANT","Food Lion","bFresh","MARTIN'S"],"selling":["Advertising is available in Ahold pharmacy areas.","Food Lion is sellable only for national CPG campaigns."],"allows":[],"exclusions":[["Abortion Clinics","No health clinics who specialize in abortion."],["Adult Shops or Adult Entertainment","Includes adult video and lingerie shops that sell sexually oriented \"toys\"; Victoria Secret is OK."],["Attorneys — Slip & Fall or Employment","Family law, trusts, wills, divorce, bankruptcy, and immigration are OK."],["Bail Bonds",""],["Cannabis Stores / Cannabis Products",""],["Cemeteries / Funeral Services",""],["Direct Competitors","Direct competitors with the venue in question are excluded."],["Donation Solicitations",""],["Pharmacies","If there’s a pharmacy in the venue."],["Gender Transition Services / Medication",""],["Gas Stations","Service & repair without gas dispensing permitted."],["Hiring Ads","Must require certification, license, or degree and can’t be in direct competition of store."],["Grocery / Drug / Mass Merchandise Retailers",""],["Illegal Activity & Drugs",""],["Massage Parlors","Therapeutic massage and spa-type massage are OK."],["No Dollar-Off Advertising","Applies to items sold in the venue."],["Pet Supplies","Any pet supply must be dollar-off service; no pet food."],["Political Activities","Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives."],["Political Organizations or Candidates",""],["Religious Groups / Organizations / Schools / Bookstores / Churches",""],["Tobacco / Smoke / Cigar / Vapor Shops",""],["Vitamin Stores","Examples include GNC."],["Weapons, Firearms & Ammunition",""]]},{"venue":"Albertsons / Safeway","subsidiaries":["Vons","Jewel-Osco","Pavilions","Acme","Andronico's","Haggen","Balducci's","Kings","Amigos","United Supermarkets","Shaw's","Carrs","Pak'nSave","Tom Thumb","Save Mart"],"selling":[],"allows":[],"exclusions":[["Abortion Clinics","No health clinics that specialize in abortion."],["Adult Shops or Adult Entertainment","Includes adult video and lingerie shops that sell sexually oriented \"toys\"; Victoria’s Secret is permitted."],["Attorneys — Slip & Fall or Employment","Family law, trusts, wills, divorce, bankruptcy, and immigration are permitted."],["Bail Bonds",""],["Cannabis Stores / Cannabis Products",""],["Cemeteries / Funeral Services",""],["Direct Competitors","Direct competitors with the venue in question are excluded."],["Donation Solicitations",""],["Pharmacies","If there’s a pharmacy in the venue."],["Gender Transition Services / Medication",""],["Hiring Ads","Must require certification, license, or degree and cannot be in direct competition with the store."],["Grocery / Drug / Mass Merchandise Retailers",""],["Massage Parlors","Therapeutic massage and spa-type massage are permitted."],["No Dollar-Off Advertising","Applies to items sold in the venue."],["Illegal Activity & Drugs",""],["Pet Supplies","Any pet supply must be dollar-off service; no pet food."],["Political Activities","Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives."],["Political Organizations or Candidates",""],["Tobacco / Smoke / Cigar / Vapor Shops",""],["Vitamin Stores","Examples include GNC."],["Weapons, Firearms & Ammunition",""]]},{"venue":"CVS","subsidiaries":["CVS Pharmacy y más","Navarro Discount Pharmacy"],"selling":[],"allows":[],"exclusions":[["Alcohol Bottlers","No ads purchased by beer, wine, or hard-liquor companies."],["Chiropractors",""],["Clinical Trials",""],["Contests or Sweepstakes",""],["CoolSculpting / Body Sculpting",""],["Dollar Stores",""],["Gambling, Lottery, Fantasy Sports & Real-Money Gaming",""],["Health Claims or Clinical Trials",""],["Hospitals, ERs, Health Clinics, Urgent Care, Primary Care & Invasive Procedures",""],["Health Insurance","No Medicare Part D providers; applies to Aetna and SilverScript."],["Hearing Aid Companies",""],["Hormone Therapy",""],["Ketamine Therapy",""],["Medical Weight Loss",""],["Mental Health Services",""],["Pharmacies","If there is a pharmacy in the venue."],["Sleep Clinics",""],["Virtual or Online Social Programs",""],["Wellness Companies","Includes IV drip services."]]},{"venue":"Giant Eagle","subsidiaries":[],"selling":["All medical ads must include the words “not endorsed by Giant Eagle.”"],"allows":[],"exclusions":[["Auto Supply Stores","Permitted, but offers cannot apply to car-cleaning products or accessories sold by the store."],["Bagel Shops",""],["Banks",""],["Card Shops","Gift shops are permitted; greeting-card offers are not."],["Car Washes",""],["Carpet Cleaning Rentals",""],["Chicken Restaurants","Fast-food establishments are permitted; takeout-only is not."],["Christmas Trees",""],["Coffee Shops","Only when an in-store fresh-brewed coffee retailer exists."],["Drug Committees","Example: legalized marijuana advocacy."],["Dry Cleaners and Laundry Services",""],["Espresso-Type Shops / Carts",""],["Film Developing",""],["Health Supplies",""],["Headshops",""],["Ice Cream / Yogurt",""],["Meat / Seafood Markets",""],["Medicare / Medicaid","Health insurance is permitted, but this category may not be offered."],["Nurseries / Floral Shops",""],["Office Supply Stores","No competing products; color copies are permitted."],["Pet Stores",""],["Produce Stands / Farmers Markets",""],["Sub Shops / Delis / Sandwich Shops",""]]},{"venue":"H-E-B","subsidiaries":["Joe V's Smart Shop","Mi Tienda"],"selling":[],"allows":[],"exclusions":[["800 / 900 Number Businesses",""],["Alcohol",""],["Animal Breeders or Animal Sales",""],["Any Home-Based Businesses",""],["Bakeries",""],["Butcher Shops",""],["Car Washes",""],["Cellular Phones","Only when the H-E-B store has one; H-E-B supplies the updated list."],["Farmers Markets",""],["Florists",""],["Gambling, Lottery, Fantasy Sports & Real-Money Gaming",""],["Gas Stations","Service and repair without gas dispensing is permitted."],["H-E-B Competitors",""],["Ketamine Therapy",""],["Meat Markets",""],["Multi-Level Marketing","Examples include Avon or Amway."],["Photo Stores",""],["Psychics",""],["Restaurants / Food",""],["Tattoo / Tattoo Removal",""],["Weight Loss",""],["Weight Loss Injectables",""]]},{"venue":"Hy-Vee","subsidiaries":["Fresh Market"],"selling":[],"allows":[],"exclusions":[["Bakeries",""],["Banks","Only when the store has a bank."],["Butcher Shops",""],["Gas Stations","Service and repair without gas dispensing is permitted."],["Health Clinics, Urgent Care & Primary Doctors","Hospitals and ERs are permitted unless they provide outpatient pharmacies."],["Meat Markets",""],["Pharmacies","Only when the store has a pharmacy inside."],["Religious Groups / Organizations / Schools / Bookstores / Churches",""]]},{"venue":"Strack & Van Til","subsidiaries":[],"selling":["Shopper-marketing CPG may only be sold with Hy-Vee pre-approval."],"allows":[],"exclusions":[["Alcohol Bottlers","No ads purchased by beer, wine, or hard-liquor companies."],["Bakeries",""],["Banks, Credit Unions or Check Cashing / Loans",""],["Beauty Supplies","Beauty salons are permitted; no competing product offers."],["Body Piercing / Tattoo Parlors",""],["Chiropractors","Licensed chiropractors are permitted if they do not advertise work-related accidents."],["Convenience Stores / Gas Stations",""],["Exercise Equipment and Footwear","Apparel or non-competing services are permitted."],["Florists","Only if the location has a floral department."],["Fuel Offers","Only if the location offers fuel; repair, inspection and smog certification are permitted."],["Grocery / Drug / Mass Merchandise Retailers","Includes no mention of them."],["Health Food Stores",""],["Hiring Ads","Must require certification, license, or degree and cannot directly compete with the store."],["Ice Cream Stores",""],["Meat Markets / Butcher Shops",""],["No Dollar-Off Purchase Ads",""],["Palm Readers",""],["Pet Food Stores","Pet stores and pet-service businesses are permitted."],["Quick-Service Restaurants","Very limited menu, precooked or quickly prepared food, and takeout operations."],["Seafood Markets",""]]},{"venue":"Kroger","subsidiaries":["Harris Teeter","Ralphs","Smith's","Fry's","King Soopers","Mariano's","Pick'n Save","QFC","Fred Meyer","Foods Co.","Food 4 Less","City Market","Ruler","Kroger Marketplace","Metro Market","Jay C","Gerbes","Dillons","Pay Less"],"selling":[],"allows":[],"exclusions":[["800 / 900 Number Businesses",""],["Alcohol Bottlers","No ads purchased by beer, wine, or hard-liquor companies."],["Bakeries",""],["Banks","Only when the store has a bank."],["Butcher Shops",""],["Carpet Cleaning Rentals",""],["Club Stores",""],["Coffee Shops","Only when the store has Starbucks or another coffee shop in-store."],["CPG Ads of Any Kind",""],["Credit Cards",""],["Dollar Stores",""],["Drug / GM Retailers",""],["Florists",""],["Gas Stations","Service and repair without gas dispensing is permitted."],["Grab & Go","Prepackaged food items and meal kits."],["Health Clinics, Urgent Care & Primary Doctors","Hospitals and ERs are permitted."],["Health Insurance","No Medicare in select counties listed in the PDF."],["Internet",""],["Jewelry Stores",""],["Money Orders, Money Wiring Services & Coinstar",""],["Natural Food Centers",""],["Prepaid Phones & Wireless Cards",""],["Psychics",""]],"counties":{"Colorado":["Adams","Douglas","Jefferson","Larimer","Weld","El Paso","Delta","Broomfield","Arapahoe","Pueblo","Denver","Mesa","Summit","Boulder","Routt","Teller"],"Idaho":["Twin Falls","Ada","Canyon","Cassia"],"Nevada":["Clark","Nye","Douglas"],"Utah":["Salt Lake","Davis","Utah","Cache","Weber","Box Elder","Summit","Iron","Washington","Wasatch"]}},{"venue":"LA Fitness","subsidiaries":["Esporta Fitness","City Sports Club"],"selling":["A minimum of 10 kiosks must be purchased; only one must be in an LA Fitness location.","Each store averages six kiosks throughout the gym floor plan."],"allows":["Vitamin Stores","Religious Groups / Organizations / Schools / Bookstores / Churches"],"exclusions":[["Alcohol Bottlers","No ads purchased by beer, wine, or hard-liquor companies."],["Advertising Content Standards","No racist, sexist, obscene, violent, discriminatory, insensitive or otherwise offensive advertising."],["Cannabis",""],["Cigarettes",""],["Dating Applications / Websites",""],["Erectile Dysfunction Medication",""],["Feminine Hygiene Products",""],["General Weight Loss Services",""],["Liquor",""],["Nutritional Supplements",""],["Prescription Opioids",""],["Competitive Medical Service Providers","Includes chiropractors, massage therapists, physical therapists and others offering personal training, group exercise or competing services."],["Spa Services and Related Amenities",""],["Tanning Services",""]]},{"venue":"The Save Mart Companies","subsidiaries":["Lucky","FoodMaxx","Save Mart","Roth's Fresh Markets"],"selling":[],"allows":[],"exclusions":[["Bakeries",""],["Beauty Supplies","Beauty salons are permitted; no competing product offers."],["Chiropractors","Permitted if they do not advertise work-related accidents."],["Curbside Pickup","Competitive activities that would take traffic away from stores."],["Dollar Stores",""],["Drug Committees or Cannabis Businesses",""],["Drug Stores",""],["Ecommerce",""],["Florists","If the store has a floral department."],["Fuel Offers","Repair, inspection and smog certification only."],["Gambling",""],["Home Delivery Services",""],["Liquor Stores",""],["Meat Markets",""],["Misleading Claims",""],["Occult and Paranormal",""],["Pet Food Stores","Pet stores and pet-service businesses are permitted."],["Pharmacies","Vaccination and immunization clinics."],["Sandwich Shops",""],["Seafood Stores",""],["Smoking Cessation",""],["Tanning Salons",""],["Vape Shops / Marijuana / CBD / Hemp Products",""]]},{"venue":"Quest Diagnostics","subsidiaries":[],"selling":["Only a top advertisement is available; no bottom artwork."],"allows":[],"exclusions":[["Abortion Clinics","No health clinics who specialize in abortion."],["Testing and Lab Offerings from Other Labs","Examples include Labcorp."],["Adult Shops or Adult Entertainment","Includes adult video and lingerie shops that sell sexually oriented \"toys\"; Victoria Secret is OK."],["Attorneys — Slip & Fall or Employment","Family law, trusts, wills, divorce, bankruptcy, and immigration are okay."],["Bail Bonds",""],["Cannabis Stores / Cannabis Products",""],["Cemeteries / Funeral Services",""],["Direct Competitors","Direct competitors with the venue in question are excluded."],["Donation Solicitations",""],["Gender Transition Services / Medication",""],["Hiring Ads","Must require certification, license, or degree and can't be in direct competition of store."],["Health Plan Promotions","Health plan promotions that encourage switching plans or favor one plan over another are excluded."],["Illegal Activity & Drugs",""],["Massage Parlors","Therapeutic massage and spa-type massage are OK."],["No Dollar-Off Advertising","Applies to items sold in the venue."],["Pet Supplies","Any pet supply must be dollar-off service; no pet food."],["Political Activities","Includes organizing political actions, soliciting political contributions, promoting candidates, and advocating ballot initiatives."],["Political Organizations or Candidates",""],["Religious Groups / Organizations / Schools / Bookstores / Churches",""],["Tobacco / Smoke / Cigar / Vapor Shops",""],["Vitamin Stores","Examples include GNC."]]}]};
 let general = DATA.general.map(([name,note]) => ({name,note,scope:'General'}));
 
@@ -1102,5 +2497,5 @@ freeReviewButton.removeEventListener('click',analyzeInquiry);
 freeReviewButton.addEventListener('click',()=>runFreeURLReview().catch(err=>{document.getElementById('urlAnalysisStatus').textContent='Review error: '+err.message;}));
 document.getElementById('assistantReset').addEventListener('click',()=>{document.getElementById('websiteUrl').value='';document.getElementById('artworkUrl').value='';document.getElementById('artworkFile').value='';document.getElementById('urlAnalysisStatus').textContent='';});
 </script>
-</body>
-</html>
+
+<scribe-shadow id="crxjs-ext" data-crx="okfkdaglfjjjfefdcppliegebpoegaii" style="position: fixed; width: 0px; height: 0px; top: 0px; left: 0px; z-index: 2147483647; overflow: visible; visibility: visible; pointer-events: none;"></scribe-shadow></body></html>
