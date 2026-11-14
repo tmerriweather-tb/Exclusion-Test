@@ -91,7 +91,7 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 .assistant-status{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(255,255,255,.28);border-radius:999px;font-size:12px;white-space:nowrap}
 .assistant-status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand-lime)}
 .assistant-body{padding:22px 24px}
-.assistant-form{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;align-items:start}
+.assistant-form{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;align-items:end}
 .assistant-field label{display:block;margin:0 0 7px;color:var(--brand-plum);font-weight:500;font-size:13px}
 .assistant-field textarea{width:100%;min-height:112px;resize:vertical;border:1px solid #c8becb;border-radius:9px;padding:13px 14px;font:500 15px/1.5 "Museo Sans",MuseoSans,"Avenir Next",Avenir,Arial,sans-serif;color:var(--ink);background:#fff}
 .assistant-actions{display:grid;gap:10px}
@@ -183,6 +183,15 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 .url-analysis-status{font-size:13px;line-height:1.55;color:#5b4761;margin:8px 0 12px;white-space:pre-wrap}
 .url-analysis-evidence{background:#f7f3f8;border-left:4px solid #6d467b;padding:12px 15px;border-radius:6px;margin:12px 0;white-space:pre-wrap;font-size:13px;line-height:1.5}
 .url-analysis-evidence summary{cursor:pointer;font-weight:bold;margin-bottom:8px}
+
+/* Explainable copilot assessment */
+.copilot-assessment{padding:20px;display:grid;gap:16px;background:#fff}
+.copilot-decision{padding:16px 18px;border-radius:10px;border-left:5px solid #8061a2;background:#f7f4fa}
+.copilot-decision.decision-likely{border-left-color:#b94b61;background:#fff5f6}
+.copilot-decision.decision-clear{border-left-color:#49866d;background:#f2faf5}
+.copilot-decision h3{margin:7px 0;font-size:21px}.copilot-decision p{margin:0;line-height:1.5}
+.copilot-section{border:1px solid var(--line);padding:15px 17px;border-radius:10px}.copilot-section h3{margin:0 0 12px;font-size:16px}.copilot-section p{line-height:1.55}
+.copilot-metric{margin:12px 0}.copilot-metric-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.copilot-metric-head b{white-space:nowrap}.copilot-metric small,.copilot-policy-row small{display:block;color:#64616c;margin-top:6px}.copilot-policy-row{padding:14px 0;border-top:1px solid var(--line)}.copilot-policy-row:first-of-type{border-top:0}.copilot-policy-row p{margin:7px 0}.copilot-exception,.copilot-caution{background:#fff8eb;padding:10px;border-radius:7px}.copilot-feedback{display:flex;flex-wrap:wrap;gap:8px}.copilot-feedback button{border:1px solid #b8a6c9;background:#f8f5fa;color:#483055;border-radius:7px;padding:9px 12px;cursor:pointer}.feedback-status{display:block;margin-top:9px;color:#64616c}
 </style>
 
 <style id="h2-font-fix">
@@ -677,6 +686,76 @@ function buildClarifyingQuestions(matches,inquiry){
   qs.push("Which venue and location are being considered?");
   return [...new Set(qs)].slice(0,4);
 }
+
+// Explainable, capped evidence-strength scoring; these are not calibrated probabilities.
+function weightedExclusionScore(match, inquiry, detected, selected){
+ const low=normalize(inquiry), name=normalize(match.name), note=normalize(match.note||'');
+ const terms=(match.hits||[]).map(normalize).filter(Boolean);
+ const titleExact=name.length>=5&&low.includes(name);
+ const titleTerms=name.split(/[^a-z0-9]+/).filter(t=>t.length>3);
+ const matchedTitle=titleTerms.filter(t=>new RegExp('\\b'+t+'\\b','i').test(low));
+ const exact=titleExact?35:Math.min(24,matchedTitle.length*8);
+ const themeConcepts=detected.filter(c=>(match.concepts||[]).includes(c.name));
+ const theme=Math.min(25,themeConcepts.reduce((n,c)=>n+8+Math.min(9,c.hits.length*3),0));
+ const supporting=Math.min(10,Math.max(0,new Set(terms).size-1)*3);
+ const contextSignals=['buy','shop','order','book','schedule','call','visit','sale','offer','services','treatment','packages','appointment','get started'];
+ const context=Math.min(20,contextSignals.filter(t=>low.includes(t)).length*5+(titleExact?5:0));
+ const venue=selected?10:match.scope==='General'?8:5;
+ let adjustment=0,exception='';
+ if(/massage/i.test(name+' '+note)&&/physical therapy|rehabilitation|injury recovery|licensed physical therapist|post.surgical rehab/i.test(low)) {adjustment=-25;exception='Therapeutic/rehabilitation context detected; verify the policy exception.';}
+ if(/alcohol|liquor|beer|wine/i.test(name+' '+note)&&/non.alcoholic|alcohol.free|zero.proof/i.test(low)){adjustment=-25;exception='Non-alcoholic context detected; verify the actual product.';}
+ const parts=[exact,theme,context,supporting,venue];
+ const score=Math.max(0,Math.min(100,parts.reduce((a,b)=>a+b,0)+adjustment));
+ return {score,parts,adjustment,exception};
+}
+function scoreBand(score){return score>=85?'Strong match':score>=65?'Likely match':score>=40?'Possible match':score>0?'Weak match':'No detected match';}
+function metricRow(label,value,description){return `<div class="copilot-metric"><div class="copilot-metric-head"><strong>${esc(label)}</strong><b>${value}%</b></div><div class="score-track"><div class="score-fill" style="width:${value}%"></div></div><small>${esc(description)}</small></div>`;}
+function scanReliability(ocrText,ocrConfidence,hasArtwork){
+ if(!hasArtwork)return null;
+ const words=(ocrText||'').match(/\b[a-zA-Z]{2,}\b/g)||[];
+ if(!words.length)return 0;
+ const coverage=Math.min(100,Math.round(words.length/18*100));
+ const quality=Number.isFinite(ocrConfidence)?Math.max(0,Math.min(100,Math.round(ocrConfidence))):null;
+ return quality===null?Math.min(85,coverage):Math.round(quality*.7+coverage*.3);
+}
+function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=false,warnings=[]}={}){
+ const result=document.getElementById('assistantResult');if(!result.classList.contains('visible'))return;
+ const inquiry=document.getElementById('assistantInquiry').value.trim();
+ const allText=[inquiry,artworkText].filter(Boolean).join('\n');
+ const selected=document.getElementById('assistantVenue').value;
+ const reliability=scanReliability(artworkText,ocrConfidence,hasArtwork);
+ const detected=detectConcepts(allText);
+ const venues=selected?DATA.venues.filter(v=>v.venue===selected):DATA.venues;
+ const candidates=[];
+ venues.forEach(v=>allExclusions(v).forEach(item=>{
+  const r=overlapScore(allText,item,detected);
+  if(r.score>0){const m={...item,venue:v.venue,...r};const w=weightedExclusionScore(m,allText,detected,selected);candidates.push({...m,...w});}
+ }));
+ candidates.sort((a,b)=>b.score-a.score);
+ const unique=new Map();for(const m of candidates){const k=normalize(m.name+'|'+m.note+'|'+m.scope);if(!unique.has(k))unique.set(k,{...m,venues:[m.venue]});else{const old=unique.get(k);if(!old.venues.includes(m.venue))old.venues.push(m.venue);if(m.score>old.score)Object.assign(old,{score:m.score,parts:m.parts,adjustment:m.adjustment,exception:m.exception});}}
+ const matches=[...unique.values()].sort((a,b)=>b.score-a.score).slice(0,8);
+ const top=matches[0];const max=top?.score||0;
+ const poorOCR=hasArtwork&&(reliability===null||reliability<55);
+ const coverageMissing=!selected;
+ const extractionFailed=hasArtwork&&!artworkText.trim();
+ let title,action,decision;
+ if(extractionFailed||(!allText.trim())||poorOCR){title='Unable to determine — manual review required';action='Review the original artwork and verify its text before making a decision.';decision='review';}
+ else if(max>=65){title='Potential exclusion — hold for review';action='Do not advance until the applicable venue policy is checked by a reviewer.';decision='likely';}
+ else if(max>=40){title='Possible exclusion — manual review required';action='Check the matching policy wording and clarify the advertised service.';decision='review';}
+ else if(max>0){title='Weak exclusion signal — review context';action='Review the low-strength match before moving forward.';decision='review';}
+ else {title='No exclusion detected — proceed to final review';action='No text-supported restriction was found. This is not a formal approval; complete the visual and venue-policy review.';decision='clear';}
+ const theme=detected.slice(0,3).map(c=>c.name).join(', ')||'Not confidently identified';
+ const themeEvidence=Math.min(100,detected[0]?Math.round(25+detected[0].hits.length*16):0);
+ const summary=detected.length?`The supplied wording appears to advertise or discuss ${theme.toLowerCase()}. ${detected[0].hits.slice(0,5).join(', ')} were detected as supporting terms.`:'The available text did not establish a reliable advertising category. Inspect the artwork visually.';
+ const breakdown=top?top.parts.map((v,i)=>`${['Exact exclusion','Advertising theme','Context and intent','Supporting terms','Venue relevance'][i]}: ${v}/${[35,25,20,10,10][i]}`).join(' · '):'No matching policy terms found.';
+ const rows=matches.map(m=>`<div class="copilot-policy-row"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${m.score}% · ${scoreBand(m.score)}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><div class="score-track"><div class="score-fill" style="width:${m.score}%"></div></div><small>Evidence: ${esc((m.hits||[]).slice(0,6).join(', ')||'Related concept')}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}</div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
+ const panel=document.createElement('section');panel.className='copilot-assessment';
+ panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3><p>${esc(action)}</p></div><div class="copilot-section"><h3>What is the artwork advertising?</h3><strong>${esc(theme)}</strong><p>${esc(summary)}</p></div><div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,'Weighted evidence score, not probability of rejection.')}${metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.')}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Estimate from OCR engine confidence and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div><details class="copilot-section"><summary>How the top score was calculated</summary><p>${esc(breakdown)}</p>${top?.adjustment?`<p>Context adjustment: ${top.adjustment} points.</p>`:''}<p>Weights: exact match 35, theme 25, context 20, terminology 10, venue relevance 10. Scores require validation with actual approval decisions.</p></details>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<div class="copilot-section"><h3>Reviewer feedback</h3><div class="copilot-feedback"><button type="button" data-feedback="correct">Correct exclusion</button><button type="button" data-feedback="incorrect">Incorrect exclusion</button><button type="button" data-feedback="review">Needs further review</button></div><small class="feedback-status">Feedback is saved only in this browser and does not automatically retrain the scanner.</small></div>`;
+ result.prepend(panel);
+ panel.querySelectorAll('[data-feedback]').forEach(btn=>btn.addEventListener('click',()=>{try{const key='venue-copilot-review-feedback-v1';const prior=JSON.parse(localStorage.getItem(key)||'[]');prior.push({at:new Date().toISOString(),venue:selected||'all',category:theme,exclusion:top?.name||'',score:max,decision:btn.dataset.feedback});localStorage.setItem(key,JSON.stringify(prior));panel.querySelector('.feedback-status').textContent='Review saved in this browser. '+prior.length+' total review(s).';}catch{panel.querySelector('.feedback-status').textContent='Unable to save review in this browser.';}}));
+ // The new assessment is authoritative; preserve the legacy analysis for detailed policy links only.
+ const legacy=result.querySelector(':scope > .result-summary');if(legacy)legacy.style.display='none';
+}
 function analyzeInquiry(){
   const inquiry=document.getElementById('assistantInquiry').value.trim();
   const selected=document.getElementById('assistantVenue').value;
@@ -920,11 +999,12 @@ async function runFreeURLReview(){
  const artworkUrl=document.getElementById('artworkUrl').value.trim();
  const file=document.getElementById('artworkFile').files[0];
  const status=document.getElementById('urlAnalysisStatus');
- if(!websiteUrl&&!artworkUrl&&!file){originalFreeReview();return;}
+ if(!websiteUrl&&!artworkUrl&&!file){originalFreeReview();attachCopilotAssessment();return;}
  if((websiteUrl&&!isHttpUrl(websiteUrl))||(artworkUrl&&!isHttpUrl(artworkUrl))){status.textContent='Enter valid public http(s) URLs.';return;}
  freeReviewButton.disabled=true;freeReviewButton.textContent='Checking URLs and artwork…';
  const evidence=[],warnings=[];
  let websiteTheme=null;
+ let artworkOCRText="", artworkOCRConfidence=null;
  try{
   if(websiteUrl||artworkUrl){
    status.textContent='Retrieving public webpage and artwork content…';
@@ -945,7 +1025,7 @@ async function runFreeURLReview(){
        const T=await loadFreeOCR();
        const result=await T.recognize(payload.artworkData,'eng');
        const text=(result.data?.text||'').trim();
-       if(text)evidence.push('ARTWORK OCR TEXT: '+text.slice(0,12000));
+       if(text){artworkOCRText=text;artworkOCRConfidence=Number(result.data?.confidence);evidence.push('ARTWORK OCR TEXT: '+text.slice(0,12000));}
        else warnings.push('Artwork: OCR found no readable text; image subjects and logos were not evaluated.');
       }catch(err){warnings.push('Artwork OCR: '+err.message);}
      }else if(!(payload.warnings||[]).some(w=>w.startsWith('Artwork:'))) warnings.push('Artwork: image could not be retrieved for OCR.');
@@ -957,7 +1037,7 @@ async function runFreeURLReview(){
    else{
     status.textContent='Reading visible text from uploaded artwork…';
     try{const T=await loadFreeOCR();const result=await T.recognize(file,'eng');const text=(result.data?.text||'').trim();
-     if(text)evidence.push('UPLOADED ARTWORK OCR TEXT: '+text.slice(0,12000));
+     if(text){artworkOCRText=[artworkOCRText,text].filter(Boolean).join('\n');artworkOCRConfidence=Number(result.data?.confidence);evidence.push('UPLOADED ARTWORK OCR TEXT: '+text.slice(0,12000));}
      else warnings.push('Uploaded artwork: no readable text found.');
     }catch(err){warnings.push('Uploaded artwork OCR: '+err.message);}
    }
@@ -975,6 +1055,7 @@ async function runFreeURLReview(){
   }
   const r=document.getElementById('assistantResult');
   if(r.classList.contains('visible')){
+   attachCopilotAssessment({artworkText:artworkOCRText,ocrConfidence:artworkOCRConfidence,hasArtwork:!!(artworkUrl||file),warnings});
    if(websiteTheme){r.prepend(renderWebsiteTheme(websiteTheme));if(!websiteTheme.hasTheme)warnings.push('Website theme could not be identified confidently; inspect the website manually.');}
    if(warnings.length||artworkUrl||file){
     // Do not imply an OCR-only review can clear artwork based on visuals.
