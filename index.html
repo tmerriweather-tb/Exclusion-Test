@@ -2151,11 +2151,11 @@ function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=f
  const extractionFailed=hasArtwork&&!artworkText.trim();
  let title,action,decision;
  if(extractionFailed||(!allText.trim())||poorOCR){title='Unable to determine — manual review required';action='Review the original artwork and verify its text before making a decision.';decision='review';}
- else if(!hasArtwork&&top?.categoryEquivalent){title='Clear category exclusion match - Review Below';action='The entered category directly matches the meaning of a listed restriction. Confirm venue applicability and policy exceptions before making a final decision.';decision='likely';}
- else if(max>=65){title='Potential exclusion — hold for review';action='Do not advance until the applicable venue policy is checked by a reviewer.';decision='likely';}
- else if(max>=40){title='Possible exclusion — manual review required';action='Check the matching policy wording and clarify the advertised service.';decision='review';}
- else if(max>0){title='Weak exclusion signal — review context';action='Review the low-strength match before moving forward.';decision='review';}
- else {title='No exclusion detected — proceed to final review';action='No text-supported restriction was found. This is not a formal approval; complete the visual and venue-policy review.';decision='clear';}
+ else if(!hasArtwork&&top?.categoryEquivalent){title='Clear Category Exclusion Match - Explanation Below';action='The entered category directly matches the meaning of a listed restriction. Confirm venue applicability and policy exceptions before making a final decision.';decision='likely';}
+ else if(max>=65){title='Potential Exclusion — Review Below or Contact Design Manager';action='Do not advance until the applicable venue policy is checked by a reviewer.';decision='likely';}
+ else if(max>=40){title='Possible Exclusion — Review Below or Contact Design Manager';action='Check the matching policy wording and clarify the advertised service.';decision='review';}
+ else if(max>0){title='Weak Exclusion Signal — Review Context Before Proceeding';action='Review the low-strength match before moving forward.';decision='review';}
+ else {title='No Exclusion Detected';action='No text-supported restriction was found. This is not a formal approval; complete the visual and venue-policy review.';decision='clear';}
  const theme=detected.slice(0,3).map(c=>c.name).join(', ')||'Not confidently identified';
  const themeEvidence=Math.min(100,detected[0]?Math.round(25+detected[0].hits.length*16):0);
  const summary=detected.length?`The supplied wording appears to advertise or discuss ${theme.toLowerCase()}. ${detected[0].hits.slice(0,5).join(', ')} were detected as supporting terms.`:'The available text did not establish a reliable advertising category. Inspect the artwork visually.';
