@@ -1257,7 +1257,7 @@ header h1,
       </div>
       <div class="exclusion">
         <strong>Health Clinics, Urgent Care &amp; Primary Doctors</strong>
-        <span class="note">Hospitals are permitted. Emergency Rooms are only permitted in counties that do not have a TLC <a href="https://terraboostsolutions-my.sharepoint.com/:x:/g/personal/tmerriweather_terraboost_biz/IQD2Qw-XhQs8TqFzZYm7vlkDAeUoXrm7WGaSQ9WBck7HQ14?e=grMXcF">Check the TLC List</a></span>
+        <span class="note">Hospitals are permitted. Emergency Rooms are only permitted in counties that do not have a TLC <a href="https://terraboostsolutions-my.sharepoint.com/:x:/g/personal/tmerriweather_terraboost_biz/IQD2Qw-XhQs8TqFzZYm7vlkDAeUoXrm7WGaSQ9WBck7HQ14?e=grMXcF" target="_blank" rel="noopener noreferrer">Check the TLC List</a></span>
         <div class="badge scope-badge">Venue-specific</div>
       </div>
       <div class="exclusion">
@@ -1797,6 +1797,19 @@ function highlight(text, q) {
   return esc(text).replace(new RegExp(`(${safe})`,'ig'),'<mark>$1</mark>');
 }
 
+// Render the approved Kroger TLC resource as a clickable link while escaping all other note text.
+function renderExclusionNote(note, query, venue, exclusionName) {
+  const linkLabel = 'Check the TLC List';
+  const url = 'https://terraboostsolutions-my.sharepoint.com/:x:/g/personal/tmerriweather_terraboost_biz/IQD2Qw-XhQs8TqFzZYm7vlkDAeUoXrm7WGaSQ9WBck7HQ14?e=grMXcF';
+  if (venue !== 'Kroger' || exclusionName !== 'Health Clinics, Urgent Care & Primary Doctors' || !note.includes(linkLabel)) {
+    return highlight(note, query);
+  }
+  const i = note.indexOf(linkLabel);
+  return highlight(note.slice(0, i), query)
+    + `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${highlight(linkLabel, query)}</a>`
+    + highlight(note.slice(i + linkLabel.length), query);
+}
+
 const venueFilter = document.getElementById('venueFilter');
 DATA.venues.forEach(v => {
   const o=document.createElement('option'); o.value=v.venue; o.textContent=v.venue; venueFilter.appendChild(o);
@@ -1878,7 +1891,7 @@ function render() {
     const exclusions = list.map(x=>`
       <div class="exclusion">
         <strong>${highlight(x.name,q)}</strong>
-        ${x.note?`<span class="note">${highlight(x.note,q)}</span>`:''}
+        ${x.note?`<span class="note">${renderExclusionNote(x.note,q,v.venue,x.name)}</span>`:''}
         <div class="badge scope-badge">Venue-specific</div>
       </div>`).join('');
     let counties='';
