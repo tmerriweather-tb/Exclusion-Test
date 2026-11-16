@@ -2151,7 +2151,7 @@ function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=f
  const extractionFailed=hasArtwork&&!artworkText.trim();
  let title,action,decision;
  if(extractionFailed||(!allText.trim())||poorOCR){title='Unable to determine — manual review required';action='Review the original artwork and verify its text before making a decision.';decision='review';}
- else if(!hasArtwork&&top?.categoryEquivalent){title='Clear category exclusion match — hold for review';action='The entered category directly matches the meaning of a listed restriction. Confirm venue applicability and policy exceptions before making a final decision.';decision='likely';}
+ else if(!hasArtwork&&top?.categoryEquivalent){title='Clear category exclusion match - Review Below';action='The entered category directly matches the meaning of a listed restriction. Confirm venue applicability and policy exceptions before making a final decision.';decision='likely';}
  else if(max>=65){title='Potential exclusion — hold for review';action='Do not advance until the applicable venue policy is checked by a reviewer.';decision='likely';}
  else if(max>=40){title='Possible exclusion — manual review required';action='Check the matching policy wording and clarify the advertised service.';decision='review';}
  else if(max>0){title='Weak exclusion signal — review context';action='Review the low-strength match before moving forward.';decision='review';}
