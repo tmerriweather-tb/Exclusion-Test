@@ -191,6 +191,7 @@ footer{max-width:1180px;margin:0 auto 40px;padding:0 22px;color:var(--brand-gray
 .copilot-decision h3{margin:7px 0;font-size:21px}.copilot-decision p{margin:0;line-height:1.5}
 .copilot-section{border:1px solid var(--line);padding:15px 17px;border-radius:10px}.copilot-section h3{margin:0 0 12px;font-size:16px}.copilot-section p{line-height:1.55}
 .copilot-metric{margin:12px 0}.copilot-metric-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.copilot-metric-head b{white-space:nowrap}.copilot-metric small,.copilot-policy-row small{display:block;color:#64616c;margin-top:6px}.copilot-policy-row{padding:14px 0;border-top:1px solid var(--line)}.copilot-policy-row:first-of-type{border-top:0}.copilot-policy-row p{margin:7px 0}.copilot-exception,.copilot-caution{background:#fff8eb;padding:10px;border-radius:7px}.copilot-feedback{display:flex;flex-wrap:wrap;gap:8px}.copilot-feedback button{border:1px solid #b8a6c9;background:#f8f5fa;color:#483055;border-radius:7px;padding:9px 12px;cursor:pointer}.feedback-status{display:block;margin-top:9px;color:#64616c}
+.advertiser-classification{margin:12px 0 14px;padding:13px 15px;background:rgba(125,40,95,.055);border:1px solid rgba(125,40,95,.23);border-radius:9px}.advertiser-classification-label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;margin-bottom:7px}.advertiser-classification-label span{font-weight:600;text-transform:none;letter-spacing:0;margin-left:8px}.advertiser-classification>strong{display:block;font-size:18px}.advertiser-classification p{margin:7px 0;line-height:1.45}.advertiser-classification small{display:block;opacity:.85}.classification-distinction{font-style:italic}
 </style>
 
 <style id="h2-font-fix">
@@ -2152,6 +2153,39 @@ function scanReliability(ocrText,ocrConfidence,hasArtwork){
  const quality=Number.isFinite(ocrConfidence)?Math.max(0,Math.min(100,Math.round(ocrConfidence))):null;
  return quality===null?Math.min(85,coverage):Math.round(quality*.7+coverage*.3);
 }
+// Evidence-based advertiser classification, independent from exclusion approval.
+// Explicit category phrases carry more weight than generic services or business names.
+const ADVERTISER_BUSINESS_CATEGORIES = [
+ {name:'Non-Medical Home Care & Caregiving', patterns:[
+  ['non-medical home care',12],['non medical home care',12],['home care',7],['caregiving',7],
+  ['in-home care',7],['in home care',7],['personal care',3],['bathing',2],['dressing',2],
+  ['meal prep',2],['meal-prep',2],['housekeeping',2],['house keeping',2],
+  ['companionship',3],['errands',1],['daily living assistance',5]],
+  distinction:'Non-medical personal assistance is not automatically a medical clinic, hospital, or nursing facility.'},
+ {name:'Medical Clinic & Clinical Services',patterns:[['medical clinic',10],['urgent care',10],['primary care',8],['physician',5],['diagnostic testing',7],['medical treatment',7],['clinical services',6]]},
+ {name:'Pharmacy & Prescription Services',patterns:[['pharmacy',10],['prescription medications',10],['prescription drugs',10],['refill prescriptions',8]]},
+ {name:'Home Improvement & Repair',patterns:[['home improvement',10],['roofing',7],['plumbing',7],['hvac',7],['garage door repair',9],['remodeling',6]]},
+ {name:'Financial Services',patterns:[['financial services',10],['mortgage',8],['personal loans',7],['banking',6],['credit union',8]]},
+ {name:'Restaurants & Food Service',patterns:[['restaurant',9],['catering',8],['food delivery',7],['dine in',6],['takeout',6]]},
+ {name:'Fitness & Wellness',patterns:[['personal training',9],['fitness center',9],['gym membership',8],['yoga studio',7],['pilates',7]]}
+];
+function classifyAdvertiserBusiness(text){
+ const normalized=String(text||'').toLowerCase().replace(/[\u2010-\u2015]/g,'-').replace(/\s+/g,' ').replace(/[^a-z0-9 -]/g,' ');
+ const found=ADVERTISER_BUSINESS_CATEGORIES.map(category=>{
+  const hits=category.patterns.filter(([term])=>{
+   const safe=term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+   return new RegExp('(?:^|[^a-z0-9])'+safe+'(?=$|[^a-z0-9])','i').test(normalized);
+  });
+  return {...category,hits,score:hits.reduce((sum,[,weight])=>sum+weight,0)};
+ }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+ const best=found[0];
+ if(!best||best.score<5)return {name:'Not confidently identified',strength:'Insufficient evidence',evidence:[],distinction:''};
+ const strength=best.score>=16&&best.hits.length>=2?'Strong evidence':best.score>=9?'Moderate evidence':'Limited evidence';
+ return {name:best.name,strength,evidence:best.hits.map(([term])=>term).slice(0,7),distinction:best.distinction||''};
+}
+function businessClassificationMarkup(classification){
+ return `<div class="advertiser-classification"><div class="advertiser-classification-label">Advertiser business classification <span>${esc(classification.strength)}</span></div><strong>${esc(classification.name)}</strong>${classification.evidence.length?`<p>Supporting artwork / website wording: ${esc(classification.evidence.join(', '))}.</p>`:'<p>No reliable category was established from the extracted wording.</p>'}${classification.distinction?`<p class="classification-distinction">${esc(classification.distinction)}</p>`:''}<small>Business classification is separate from venue exclusion status and is not an approval.</small></div>`;
+}
 function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=false,warnings=[]}={}){
  const result=document.getElementById('assistantResult');if(!result.classList.contains('visible'))return;
  const inquiry=document.getElementById('assistantInquiry').value.trim();
@@ -2180,13 +2214,14 @@ function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=f
  else if(max>=40){title='Possible Exclusion — Review Below or Contact Design Manager';action='Check the matching policy wording and clarify the advertised service.';decision='review';}
  else if(max>0){title='Weak Exclusion Signal — Review Context Before Proceeding';action='Review the low-strength match before moving forward.';decision='review';}
  else {title='No Exclusion Detected';action='No text-supported restriction was found. This is not a formal approval; complete the visual and venue-policy review.';decision='clear';}
+ const businessClassification=classifyAdvertiserBusiness(allText);
  const theme=detected.slice(0,3).map(c=>c.name).join(', ')||'Not confidently identified';
  const themeEvidence=Math.min(100,detected[0]?Math.round(25+detected[0].hits.length*16):0);
  const summary=detected.length?`The supplied wording appears to advertise or discuss ${theme.toLowerCase()}. ${detected[0].hits.slice(0,5).join(', ')} were detected as supporting terms.`:'The available text did not establish a reliable advertising category. Inspect the artwork visually.';
  const breakdown=top?top.parts.map((v,i)=>`${['Exact exclusion','Advertising theme','Context and intent','Supporting terms','Venue relevance'][i]}: ${v}/${[35,25,20,10,10][i]}`).join(' · '):'No matching policy terms found.';
  const rows=matches.map((m,i)=>`<div class="copilot-policy-row" data-policy-review-row="${i}"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${m.score}% · ${!hasArtwork&&m.categoryEquivalent?'Clear category match':scoreBand(m.score)}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><div class="score-track"><div class="score-fill" style="width:${m.score}%"></div></div><small>Evidence: ${esc(!hasArtwork?(m.matchReason||'Related policy terminology'):((m.hits||[]).slice(0,6).join(', ')||'Related concept'))}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}<div class="copilot-feedback" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" data-policy-feedback="correct" data-policy-index="${i}">Correct exclusion</button><button type="button" data-policy-feedback="incorrect" data-policy-index="${i}">Incorrect exclusion</button><button type="button" data-policy-feedback="review" data-policy-index="${i}">Needs further review</button></div><small class="policy-feedback-status" aria-live="polite">Not reviewed yet</small></div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
  const panel=document.createElement('section');panel.className='copilot-assessment';
- panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3><p>${esc(action)}</p></div>${hasArtwork?`<div class="copilot-section"><h3>What is the artwork advertising?</h3><strong>${esc(theme)}</strong><p>${esc(summary)}</p></div>`:``}<div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,hasArtwork?'Weighted artwork evidence score, not probability of rejection.':'Text-only category alignment score; direct category equivalents are strong matches, not probability of rejection.')}${hasArtwork?metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.'):''}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Estimate from OCR engine confidence and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div><details class="copilot-section"><summary>How the top score was calculated</summary><p>${esc(breakdown)}</p>${top?.adjustment?`<p>Context adjustment: ${top.adjustment} points.</p>`:''}<p>${hasArtwork?'Artwork weights: exact match 35, theme 25, context 20, terminology 10, venue relevance 10.':'Text-only searches score direct title/category equivalence strongly (90–100); weaker related terms use a separate category-alignment scale.'} Scores are not calibrated exclusion probabilities.</p></details>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<p class="copilot-caution">Review each matching restriction individually using its buttons above. Feedback is saved locally in this browser and does not automatically retrain the scanner.</p>`;
+ panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3>${businessClassificationMarkup(businessClassification)}<p>${esc(action)}</p></div><div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,hasArtwork?'Weighted artwork evidence score, not probability of rejection.':'Text-only category alignment score; direct category equivalents are strong matches, not probability of rejection.')}${hasArtwork?metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.'):''}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Estimate from OCR engine confidence and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div><details class="copilot-section"><summary>How the top score was calculated</summary><p>${esc(breakdown)}</p>${top?.adjustment?`<p>Context adjustment: ${top.adjustment} points.</p>`:''}<p>${hasArtwork?'Artwork weights: exact match 35, theme 25, context 20, terminology 10, venue relevance 10.':'Text-only searches score direct title/category equivalence strongly (90–100); weaker related terms use a separate category-alignment scale.'} Scores are not calibrated exclusion probabilities.</p></details>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<p class="copilot-caution">Review each matching restriction individually using its buttons above. Feedback is saved locally in this browser and does not automatically retrain the scanner.</p>`;
  result.prepend(panel);
  panel.querySelectorAll('[data-policy-feedback]').forEach(btn=>btn.addEventListener('click',()=>{
   const m=matches[Number(btn.dataset.policyIndex)];if(!m)return;
@@ -2500,8 +2535,8 @@ async function runFreeURLReview(){
   }
   const r=document.getElementById('assistantResult');
   if(r.classList.contains('visible')){
-   attachCopilotAssessment({artworkText:artworkOCRText,ocrConfidence:artworkOCRConfidence,hasArtwork:!!(artworkUrl||file),warnings});
-   if(websiteTheme){r.prepend(renderWebsiteTheme(websiteTheme));if(!websiteTheme.hasTheme)warnings.push('Website theme could not be identified confidently; inspect the website manually.');}
+   attachCopilotAssessment({artworkText:[artworkOCRText,websiteTheme?.description||'',websiteTheme?.summary||''].filter(Boolean).join('\n'),ocrConfidence:artworkOCRConfidence,hasArtwork:!!(artworkUrl||file),warnings});
+   if(websiteTheme&&!websiteTheme.hasTheme)warnings.push('Website theme could not be identified confidently; inspect the website manually.');
    if(warnings.length||artworkUrl||file){
     // Do not imply an OCR-only review can clear artwork based on visuals.
     if(!r.classList.contains('decision-likely')){
