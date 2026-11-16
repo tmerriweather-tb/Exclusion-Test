@@ -2162,6 +2162,7 @@ const ADVERTISER_BUSINESS_CATEGORIES = [
   ['meal prep',2],['meal-prep',2],['housekeeping',2],['house keeping',2],
   ['companionship',3],['errands',1],['daily living assistance',5]],
   distinction:'Non-medical personal assistance is not automatically a medical clinic, hospital, or nursing facility.'},
+ {name:'Acupuncture & Traditional Chinese Medicine',patterns:[['acupuncture',12],['acupuncture is my life',12],['traditional chinese medicine',12],['chinese medicine',10],['chinese herbs',7],['cupping',6],['acupuncturist',10],['pain and tension',2],['restore energy',2],['virtual consultation',1]],distinction:'Acupuncture and traditional Chinese medicine are distinct from non-medical caregiving; check venue-specific restrictions on treatment and healthcare advertising.'},
  {name:'Medical Clinic & Clinical Services',patterns:[['medical clinic',10],['urgent care',10],['primary care',8],['physician',5],['diagnostic testing',7],['medical treatment',7],['clinical services',6]]},
  {name:'Pharmacy & Prescription Services',patterns:[['pharmacy',10],['prescription medications',10],['prescription drugs',10],['refill prescriptions',8]]},
  {name:'Home Improvement & Repair',patterns:[['home improvement',10],['roofing',7],['plumbing',7],['hvac',7],['garage door repair',9],['remodeling',6]]},
@@ -2474,6 +2475,44 @@ function loadFreeOCR(){
   document.head.appendChild(s);
  }).catch(e=>{ocrScriptPromise=null;throw e});return ocrScriptPromise;
 }
+// Multi-region OCR: a full image pass plus overlapping panel crops to recover small text.
+// Crop passes are deduplicated and their text is fed into the same overall summary.
+async function recognizeArtworkPanels(source, T, onProgress){
+ const image=await createImageBitmap(source);
+ const w=image.width,h=image.height;
+ const regions=[{x:0,y:0,w,h}];
+ if(w>=400&&h>=400){
+  // Two halves capture adjacent sanitizer displays; vertical crops isolate top and bottom ads.
+  regions.push({x:0,y:0,w:Math.ceil(w*.57),h});
+  regions.push({x:Math.floor(w*.43),y:0,w:Math.ceil(w*.57),h});
+  regions.push({x:0,y:0,w,h:Math.ceil(h*.56)});
+  regions.push({x:0,y:Math.floor(h*.44),w,h:Math.ceil(h*.56)});
+ }
+ const parts=[],scores=[];
+ try{
+  for(let i=0;i<regions.length;i++){
+   if(onProgress)onProgress(i+1,regions.length);
+   const r=regions[i];const canvas=document.createElement('canvas');
+   const scale=Math.min(2.4,Math.max(1,1600/Math.max(r.w,r.h)));
+   canvas.width=Math.round(r.w*scale);canvas.height=Math.round(r.h*scale);
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});
+   if(!ctx)throw new Error('Canvas unavailable for image OCR');
+   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(image,r.x,r.y,Math.min(r.w,w-r.x),Math.min(r.h,h-r.y),0,0,canvas.width,canvas.height);
+   const result=await T.recognize(canvas,'eng');
+   const txt=(result.data?.text||'').trim();
+   if(txt)parts.push(txt);
+   if(Number.isFinite(result.data?.confidence))scores.push(result.data.confidence);
+  }
+ }finally{if(image.close)image.close();}
+ const seen=new Set(),lines=[];
+ for(const part of parts)for(const line of part.split(/\n+/)){
+  const clean=line.trim();const key=clean.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(key.length<3||seen.has(key))continue;
+  seen.add(key);lines.push(clean);
+ }
+ return {text:lines.join('\n'),confidence:scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null,passes:regions.length};
+}
 async function runFreeURLReview(){
  const websiteUrl=document.getElementById('websiteUrl').value.trim();
  const artworkUrl=document.getElementById('artworkUrl').value.trim();
@@ -2503,9 +2542,10 @@ async function runFreeURLReview(){
       status.textContent='Reading visible text from artwork image (OCR)…';
       try{
        const T=await loadFreeOCR();
-       const result=await T.recognize(payload.artworkData,'eng');
-       const text=(result.data?.text||'').trim();
-       if(text){artworkOCRText=text;artworkOCRConfidence=Number(result.data?.confidence);evidence.push('ARTWORK OCR TEXT: '+text.slice(0,12000));}
+       const imageBlob=await (await fetch(payload.artworkData)).blob();
+       const result=await recognizeArtworkPanels(imageBlob,T,(i,n)=>{status.textContent='Reading artwork panels ('+i+'/'+n+')…';});
+       const text=result.text;
+       if(text){artworkOCRText=text;artworkOCRConfidence=result.confidence;evidence.push('ARTWORK OCR TEXT ('+result.passes+' passes): '+text.slice(0,12000));}
        else warnings.push('Artwork: OCR found no readable text; image subjects and logos were not evaluated.');
       }catch(err){warnings.push('Artwork OCR: '+err.message);}
      }else if(!(payload.warnings||[]).some(w=>w.startsWith('Artwork:'))) warnings.push('Artwork: image could not be retrieved for OCR.');
@@ -2516,8 +2556,8 @@ async function runFreeURLReview(){
    if(file.size>8_000_000)warnings.push('Uploaded artwork exceeds the 8 MB limit.');
    else{
     status.textContent='Reading visible text from uploaded artwork…';
-    try{const T=await loadFreeOCR();const result=await T.recognize(file,'eng');const text=(result.data?.text||'').trim();
-     if(text){artworkOCRText=[artworkOCRText,text].filter(Boolean).join('\n');artworkOCRConfidence=Number(result.data?.confidence);evidence.push('UPLOADED ARTWORK OCR TEXT: '+text.slice(0,12000));}
+    try{const T=await loadFreeOCR();const result=await recognizeArtworkPanels(file,T,(i,n)=>{status.textContent='Reading uploaded artwork panels ('+i+'/'+n+')…';});const text=result.text;
+     if(text){artworkOCRText=[artworkOCRText,text].filter(Boolean).join('\n');artworkOCRConfidence=result.confidence;evidence.push('UPLOADED ARTWORK OCR TEXT ('+result.passes+' passes): '+text.slice(0,12000));}
      else warnings.push('Uploaded artwork: no readable text found.');
     }catch(err){warnings.push('Uploaded artwork OCR: '+err.message);}
    }
