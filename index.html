@@ -2509,7 +2509,7 @@ async function runFreeURLReview(){
      const title=r.querySelector('.result-title');if(title&&title.textContent==='No clear exclusion found')title.textContent='No text match — manual visual review required';
     }
    }
-   const d=document.createElement('details');d.className='url-analysis-evidence';d.open=true;
+   const d=document.createElement('details');d.className='url-analysis-evidence';d.open=false;
    const s=document.createElement('summary');s.textContent='Source evidence and scan limitations';
    const p=document.createElement('div');p.textContent=[...evidence,...warnings.map(w=>'LIMITATION: '+w),'NOTE: OCR does not identify objects, logos, or implied visual themes. No match is not an approval.'].join('\n\n');
    d.append(s,p);r.prepend(d);
