@@ -245,45 +245,9 @@ header h1,
   </div>
 </header>
 
-<div class="mode-bar owner-only" hidden="" aria-hidden="true">
-  <span class="mode-pill">Owner editing mode</span>
-  <button id="previewShare" class="secondary" type="button">Preview locked view</button>
-  <button id="exportShare" class="primary" type="button" disabled="">Preparing download…</button>
-</div>
-
 <main>
 
 
-  <section class="editor-panel owner-only" aria-labelledby="editorTitle" hidden="" aria-hidden="true">
-    <div class="editor-head">
-      <div><h2 id="editorTitle">Exclusion Editor</h2><p>Add new general or venue-specific exclusions. Saved changes remain in this browser and are included in exported shareable copies.</p></div>
-      <span class="mode-pill">Private controls</span>
-    </div>
-    <div class="editor-body">
-      <div class="editor-grid">
-        <div class="editor-field"><label for="editScope">Exclusion scope</label><select id="editScope"><option value="general">General — all venues</option><option value="venue">Venue-specific</option></select></div>
-        <div class="editor-field"><label for="editVenue">Venue</label><select id="editVenue" disabled=""><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select></div>
-        <div class="editor-field wide"><label for="editTitle">Exclusion title</label><input id="editTitle" type="text" placeholder="Example: Alcohol delivery services"></div>
-        <button id="addExclusion" class="primary" type="button">Add exclusion</button>
-        <div class="editor-field wide" style="grid-column:1/-1"><label for="editNote">Policy details, exceptions, or qualifying language</label><textarea id="editNote" placeholder="Add the complete policy wording so the Copilot can cross-reference it."></textarea></div>
-      </div>
-      <p id="editorFeedback" class="editor-feedback" aria-live="polite">Add complete wording whenever possible; the Compliance Copilot searches both titles and notes.</p>
-      <div class="editor-actions">
-        <button id="saveBackup" class="secondary" type="button">Download editable backup</button>
-        <button id="clearCustom" class="danger" type="button">Remove all added exclusions</button>
-      </div>
-      <details class="manage-list"><summary>Manage added exclusions</summary><div id="customList"><p class="editor-feedback">No added exclusions yet.</p></div></details>
-      <div class="editor-actions" style="margin-top:22px"><h3 style="margin:0">Additional Information</h3></div>
-      <div class="editor-grid">
-        <div class="editor-field"><label for="additionalVenue">Venue</label><select id="additionalVenue"><option value="Ahold">Ahold</option><option value="Albertsons / Safeway">Albertsons / Safeway</option><option value="Giant Eagle">Giant Eagle</option><option value="H-E-B">H-E-B</option><option value="Hy-Vee">Hy-Vee</option><option value="Strack &amp; Van Til">Strack &amp; Van Til</option><option value="Kroger">Kroger</option><option value="LA Fitness">LA Fitness</option><option value="The Save Mart Companies">The Save Mart Companies</option><option value="Quest Diagnostics">Quest Diagnostics</option></select></div>
-        <div class="editor-field wide"><label for="additionalText">New information line</label><textarea id="additionalText" placeholder="Enter a new bullet-point line for this venue"></textarea></div>
-        <button id="addAdditionalInformation" class="primary" type="button">Add Additional Information</button>
-      </div>
-      <p id="additionalFeedback" class="editor-feedback" aria-live="polite">New lines appear under Additional Information for the selected venue.</p>
-      <details class="manage-list"><summary>Manage additional information</summary><div id="additionalList"><p class="editor-feedback">No additional information added yet.</p></div></details>
-
-    </div>
-  </section>
 
   <section class="assistant-shell" aria-labelledby="assistantTitle">
     <div class="assistant-header">
@@ -2283,20 +2247,10 @@ function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=f
  const themeEvidence=Math.min(100,detected[0]?Math.round(25+detected[0].hits.length*16):0);
  const summary=detected.length?`The supplied wording appears to advertise or discuss ${theme.toLowerCase()}. ${detected[0].hits.slice(0,5).join(', ')} were detected as supporting terms.`:'The available text did not establish a reliable advertising category. Inspect the artwork visually.';
  const breakdown=top?top.parts.map((v,i)=>`${['Exact exclusion','Advertising theme','Context and intent','Supporting terms','Venue relevance'][i]}: ${v}/${[35,25,20,10,10][i]}`).join(' · '):'No matching policy terms found.';
- const rows=matches.map((m,i)=>`<div class="copilot-policy-row" data-policy-review-row="${i}"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${m.score}% · ${!hasArtwork&&m.categoryEquivalent?'Clear category match':scoreBand(m.score)}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><div class="score-track"><div class="score-fill" style="width:${m.score}%"></div></div><small>Evidence: ${esc(!hasArtwork?(m.matchReason||'Related policy terminology'):((m.hits||[]).slice(0,6).join(', ')||'Related concept'))}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}<div class="copilot-feedback" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><button type="button" data-policy-feedback="correct" data-policy-index="${i}">Correct exclusion</button><button type="button" data-policy-feedback="incorrect" data-policy-index="${i}">Incorrect exclusion</button><button type="button" data-policy-feedback="review" data-policy-index="${i}">Needs further review</button></div><small class="policy-feedback-status" aria-live="polite">Not reviewed yet</small></div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
+ const rows=matches.map((m,i)=>`<div class="copilot-policy-row" data-policy-review-row="${i}"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${m.score}% · ${!hasArtwork&&m.categoryEquivalent?'Clear category match':scoreBand(m.score)}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><div class="score-track"><div class="score-fill" style="width:${m.score}%"></div></div><small>Evidence: ${esc(!hasArtwork?(m.matchReason||'Related policy terminology'):((m.hits||[]).slice(0,6).join(', ')||'Related concept'))}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}</div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
  const panel=document.createElement('section');panel.className='copilot-assessment';
- panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3>${businessClassificationMarkup(businessClassification)}<p>${esc(action)}</p></div><div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,hasArtwork?'Weighted artwork evidence score, not probability of rejection.':'Text-only category alignment score; direct category equivalents are strong matches, not probability of rejection.')}${hasArtwork?metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.'):''}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Estimate from OCR engine confidence and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div><details class="copilot-section"><summary>How the top score was calculated</summary><p>${esc(breakdown)}</p>${top?.adjustment?`<p>Context adjustment: ${top.adjustment} points.</p>`:''}<p>${hasArtwork?'Artwork weights: exact match 35, theme 25, context 20, terminology 10, venue relevance 10.':'Text-only searches score direct title/category equivalence strongly (90–100); weaker related terms use a separate category-alignment scale.'} Scores are not calibrated exclusion probabilities.</p></details>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<p class="copilot-caution">Review each matching restriction individually using its buttons above. Feedback is saved locally in this browser and does not automatically retrain the scanner.</p>`;
+ panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3>${businessClassificationMarkup(businessClassification)}<p>${esc(action)}</p></div><div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,hasArtwork?'Weighted artwork evidence score, not probability of rejection.':'Text-only category alignment score; direct category equivalents are strong matches, not probability of rejection.')}${hasArtwork?metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.'):''}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Estimate from OCR engine confidence and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div><details class="copilot-section"><summary>How the top score was calculated</summary><p>${esc(breakdown)}</p>${top?.adjustment?`<p>Context adjustment: ${top.adjustment} points.</p>`:''}<p>${hasArtwork?'Artwork weights: exact match 35, theme 25, context 20, terminology 10, venue relevance 10.':'Text-only searches score direct title/category equivalence strongly (90–100); weaker related terms use a separate category-alignment scale.'} Scores are not calibrated exclusion probabilities.</p></details>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<p class="copilot-caution">Exclusion match scores indicate rule-based evidence strength, not approval probability. An authorized reviewer must confirm final applicability.</p>`;
  result.prepend(panel);
- panel.querySelectorAll('[data-policy-feedback]').forEach(btn=>btn.addEventListener('click',()=>{
-  const m=matches[Number(btn.dataset.policyIndex)];if(!m)return;
-  const status=btn.closest('[data-policy-review-row]').querySelector('.policy-feedback-status');
-  try{const key='venue-copilot-review-feedback-v1';const prior=JSON.parse(localStorage.getItem(key)||'[]');
-   const record={at:new Date().toISOString(),venue:selected||'all',venues:m.venues,category:hasArtwork?theme:inquiry,exclusion:m.name,scope:m.scope,policyNote:m.note||'',score:m.score,decision:btn.dataset.policyFeedback,mode:hasArtwork?'artwork':'text-only'};
-   prior.push(record);localStorage.setItem(key,JSON.stringify(prior));
-   status.textContent='Saved: '+({correct:'Correct exclusion',incorrect:'Incorrect exclusion',review:'Needs further review'}[record.decision])+' · '+new Date(record.at).toLocaleString();
-   btn.closest('.copilot-feedback').querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed',String(b===btn));b.style.fontWeight=b===btn?'800':'';});
-  }catch{status.textContent='Unable to save review in this browser.';}
- }));
  // The new assessment is authoritative; preserve the legacy analysis for detailed policy links only.
  const legacy=result.querySelector(':scope > .result-summary');if(legacy)legacy.style.display='none';const legacyMatches=result.querySelector(':scope > .result-body .match-list');if(legacyMatches)legacyMatches.closest('.result-section').style.display='none';
 }
@@ -2421,38 +2375,6 @@ function exportDirectory(locked){
   },50);
 }
 if(IS_SHARE_MODE)document.body.classList.add('share-only');
-const editVenue=document.getElementById('editVenue');
-if(editVenue)DATA.venues.forEach(v=>{const o=document.createElement('option');o.value=v.venue;o.textContent=v.venue;editVenue.appendChild(o);});
-const editScope=document.getElementById('editScope');
-if(editScope)editScope.addEventListener('change',()=>{editVenue.disabled=editScope.value!=='venue';});
-const addBtn=document.getElementById('addExclusion');
-if(addBtn)addBtn.addEventListener('click',()=>{
-  const scope=editScope.value,title=document.getElementById('editTitle').value.trim(),note=document.getElementById('editNote').value.trim(),venue=editVenue.value,feedback=document.getElementById('editorFeedback');
-  if(!title){feedback.textContent='Enter an exclusion title before adding it.';return;}
-  if(scope==='venue'&&!venue){feedback.textContent='Select a venue for this venue-specific exclusion.';return;}
-  customEntries.push({scope,venue:scope==='venue'?venue:'',title,note});persistCustom();feedback.textContent=`Added “${title}”. Reloading the directory with the new rule…`;setTimeout(rebuildDataFromBase,250);
-});
-const clearCustom=document.getElementById('clearCustom');if(clearCustom)clearCustom.addEventListener('click',()=>{if(confirm('Remove every exclusion added through the editor?')){customEntries=[];persistCustom();rebuildDataFromBase();}});
-const previewShare=document.getElementById('previewShare');if(previewShare)previewShare.addEventListener('click',()=>{document.body.classList.toggle('share-only');previewShare.textContent=document.body.classList.contains('share-only')?'Return to editing':'Preview locked view';});
-const exportShare=document.getElementById('exportShare');if(exportShare)exportShare.addEventListener('click',()=>exportDirectory(true));
-const saveBackup=document.getElementById('saveBackup');if(saveBackup)saveBackup.addEventListener('click',()=>exportDirectory(false));
-renderCustomList();
-function renderAdditionalList(){
- const list=document.getElementById('additionalList');if(!list)return;
- list.innerHTML=additionalEntries.length?additionalEntries.map((e,i)=>`<div class="custom-row"><strong>${esc(e.venue)}</strong><span>${esc(e.text)}</span><button type="button" class="danger remove-additional" data-index="${i}">Remove</button></div>`).join(''):'<p class="editor-feedback">No additional information added yet.</p>';
- list.querySelectorAll('.remove-additional').forEach(b=>b.addEventListener('click',()=>{additionalEntries.splice(Number(b.dataset.index),1);persistAdditional();renderAdditionalList();render();}));
-}
-const additionalVenue=document.getElementById('additionalVenue');
-if(additionalVenue)DATA.venues.forEach(v=>{const o=document.createElement('option');o.value=v.venue;o.textContent=v.venue;additionalVenue.appendChild(o);});
-const addAdditionalButton=document.getElementById('addAdditionalInformation');
-if(addAdditionalButton)addAdditionalButton.addEventListener('click',()=>{
- const venue=additionalVenue.value,text=document.getElementById('additionalText').value.trim(),feedback=document.getElementById('additionalFeedback');
- if(!venue||!text){feedback.textContent='Select a venue and enter an information line.';return;}
- additionalEntries.push({venue,text});persistAdditional();document.getElementById('additionalText').value='';feedback.textContent='Additional information added to '+venue+'.';renderAdditionalList();render();
-});
-renderAdditionalList();
-
-
 ['search','venueFilter','sort'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 
 document.getElementById('expandAll').addEventListener('click',()=>{
