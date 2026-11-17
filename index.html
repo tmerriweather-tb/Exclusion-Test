@@ -2006,9 +2006,25 @@ function exclusionSubjectGate(inquiry,item){
  }
  return {allowed:true,terms:[]};
 }
+function peptideRelatedPolicy(inquiry,item){
+ const text=' '+normalize(inquiry).replace(/[^a-z0-9]+/g,' ')+' ';
+ const peptide=/\bpeptides?\b|\bpeptide therapy\b|\bpeptide prescription\b/.test(text);
+ if(!peptide)return null;
+ const policy=normalize(item.name).trim();
+ const pharmacy=/^pharmacies$|^pharmacy$|pharmacy services|prescription drugs/.test(policy);
+ const weightLoss=/^weight loss$|weight loss injectables|general weight loss services|medical weight loss/.test(policy);
+ if(!pharmacy&&!weightLoss)return null;
+ const prescription=/\bprescription(s)?\b|\bpharmacy\b|\bpharmacist\b|\bdoctor review\b|\bmedication(s)?\b/.test(text);
+ if(pharmacy&&!prescription)return null;
+ const reason=pharmacy
+  ?'Peptide prescription services may relate to this pharmacy restriction. Confirm whether the venue has an in-store pharmacy and whether this advertiser is covered.'
+  :'Peptide therapy may relate to weight-loss services, but the artwork does not establish weight loss or GLP-1 treatment. Confirm the product and policy scope.';
+ return {score:9,hits:pharmacy?['peptide','prescription / pharmacy context']:['peptide'],policyHits:[],reasons:[reason],concepts:[],relatedPolicy:true,relatedReason:reason};
+}
 function overlapScore(inquiry,item,detected){
+ const related=peptideRelatedPolicy(inquiry,item);
  const gate=exclusionSubjectGate(inquiry,item);
- if(!gate.allowed)return {score:0,hits:[],policyHits:[],reasons:[],concepts:[]};
+ if(!gate.allowed)return related||{score:0,hits:[],policyHits:[],reasons:[],concepts:[]};
  let score=0,hits=[],reasons=[];
  if(hasEvidencePhrase(inquiry,item.name)){
   score+=12;hits.push(item.name);reasons.push('Exact restriction title in advertisement.');
@@ -2043,7 +2059,7 @@ function overlapScore(inquiry,item,detected){
  const directSubject=gate.terms.length>0 || hasEvidencePhrase(inquiry,item.name) ||
    phraseMatches.length>0 || (isSingleSubject && !POLICY_GENERIC_WORDS.has(titleTokens[0]) && hasEvidencePhrase(inquiry,titleTokens[0])) ||
    (ASSISTANT_SYNONYMS[item.name]||[]).some(term=>hasEvidencePhrase(inquiry,term));
- if(!directSubject)return {score:0,hits:[],policyHits:[],reasons:[],concepts:[]};
+ if(!directSubject)return related||{score:0,hits:[],policyHits:[],reasons:[],concepts:[]};
  return {score,hits:[...new Set(hits)].slice(0,10),policyHits:[],reasons:[...new Set(reasons)].slice(0,4),concepts:categoryConcepts};
 }
 function buildClarifyingQuestions(matches,inquiry){
@@ -2081,6 +2097,7 @@ function weightedExclusionScore(match, inquiry, detected, selected){
  const legalGate=exclusionSubjectGate(inquiry,match);
  const legalMinimum=legalGate.allowed&&legalGate.terms?.length?Math.min(88,68+legalGate.terms.length*4):0;
  const score=Math.max(legalMinimum,Math.max(0,Math.min(100,parts.reduce((a,b)=>a+b,0)+adjustment)));
+ if(match.relatedPolicy)return {score:Math.max(44,Math.min(54,score)),parts,adjustment,exception:match.relatedReason};
  return {score,parts,adjustment,exception};
 }
 // Text-only category searches use category equivalence, not artwork-evidence weights.
@@ -2361,7 +2378,7 @@ function attachCopilotAssessment({artworkText='',ocrConfidence=null,hasArtwork=f
  const themeEvidence=Math.min(100,detected[0]?Math.round(25+detected[0].hits.length*16):0);
  const summary=detected.length?`The supplied wording appears to advertise or discuss ${theme.toLowerCase()}. ${detected[0].hits.slice(0,5).join(', ')} were detected as supporting terms.`:'The available text did not establish a reliable advertising category. Inspect the artwork visually.';
  const breakdown=top?top.parts.map((v,i)=>`${['Exact exclusion','Advertising theme','Context and intent','Supporting terms','Venue relevance'][i]}: ${v}/${[35,25,20,10,10][i]}`).join(' · '):'No matching policy terms found.';
- const rows=matches.map((m,i)=>`<div class="copilot-policy-row" data-policy-review-row="${i}"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${!hasArtwork&&m.categoryEquivalent?'Clear category match':scoreBand(m.score)}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><small>Evidence: ${esc(!hasArtwork?(m.matchReason||'Related policy terminology'):((m.hits||[]).slice(0,6).join(', ')||'Related concept'))}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}</div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
+ const rows=matches.map((m,i)=>`<div class="copilot-policy-row" data-policy-review-row="${i}"><div class="copilot-metric-head"><strong>${esc(m.name)}</strong><b>${m.relatedPolicy?'Possible related restriction':(!hasArtwork&&m.categoryEquivalent?'Clear category match':scoreBand(m.score))}</b></div><p>${esc(m.note||'Review the original exclusion wording.')}</p><small>${esc(m.scope)} · ${esc(m.venues.join(', '))}</small><small>Evidence: ${esc(!hasArtwork?(m.matchReason||'Related policy terminology'):((m.hits||[]).slice(0,6).join(', ')||'Related concept'))}</small>${m.exception?`<p class="copilot-exception">${esc(m.exception)}</p>`:''}</div>`).join('')||'<p>No policy matches were detected in the available text.</p>';
  const panel=document.createElement('section');panel.className='copilot-assessment';
  panel.innerHTML=`<div class="copilot-decision decision-${decision}"><span class="result-kicker">COPILOT RECOMMENDATION · NOT A FINAL APPROVAL</span><h3>${esc(title)}</h3>${businessClassificationMarkup(businessClassification)}${advertisedMedicalTopicsMarkup(allText)}<p>${esc(action)}</p></div><div class="copilot-section"><h3>Evidence measurements</h3>${metricRow('Exclusion match strength',max,hasArtwork?'Qualitative assessment of artwork evidence, not probability of rejection.':'Qualitative category alignment; direct category equivalents are strong matches, not probability of rejection.')}${hasArtwork?metricRow('Advertising theme evidence',themeEvidence,'Rule-based strength of detected topic terminology.'):''}${reliability===null?'<p><strong>OCR text reliability:</strong> Not measured (no artwork OCR submitted).</p>':metricRow('OCR text reliability',reliability,'Qualitative estimate based on OCR engine output and amount of readable text.')}</div><div class="copilot-section"><h3>Matching venue restrictions</h3>${rows}</div>${coverageMissing?'<p class="copilot-caution">No venue selected. Venue-specific applicability must be verified before advancing.</p>':''}${warnings.length?`<p class="copilot-caution">Scan limitations: ${esc(warnings.join(' | '))}</p>`:''}<p class="copilot-caution">Exclusion matches reflect rule-based evidence, not approval probability. An authorized reviewer must confirm final applicability.</p>`;
  result.prepend(panel);
