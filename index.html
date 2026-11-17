@@ -2033,7 +2033,7 @@ function conceptsForCategory(name){
 function detectConcepts(inquiry){
   const text=normalize(inquiry);
   return Object.entries(CONCEPTS).map(([name,c])=>{
-    const hits=c.terms.filter(t=>text.includes(normalize(t)));
+    const hits=c.terms.filter(t=>hasEvidencePhrase(inquiry,t));
     const exact=hits.some(t=>normalize(t)===text.trim());
     return {name,hits,score:hits.length*3+(exact?3:0),categories:c.categories,terms:c.terms};
   }).filter(x=>x.hits.length).sort((a,b)=>b.score-a.score);
@@ -2053,45 +2053,64 @@ function assistantTerms(item){
   const policyText=[item.name,item.note||""].filter(Boolean).join(" ");
   return [item.name,item.note||"",...phraseWindows(policyText),...policyTokens(policyText),...direct,...conceptTerms].map(normalize).filter(Boolean);
 }
+// Match the advertised subject, not incidental words in explanatory policy notes.
+// Explanatory notes often describe ALLOWED exceptions and must not create matches.
+function hasEvidencePhrase(text,phrase){
+ const clean=normalize(phrase).replace(/[^a-z0-9]+/g,' ').trim();
+ if(!clean)return false;
+ const hay=' '+normalize(text).replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()+' ';
+ return hay.includes(' '+clean+' ');
+}
+const LEGAL_EXCLUSION_RE=/attorneys?\s*[—–-]\s*slip|slip\s*(?:&|and|\/)\s*fall.*employment/i;
+const RESTRICTED_LEGAL_SIGNALS=['personal injury attorney','personal injury lawyer','injury lawyer','injury attorney','slip and fall','slip & fall','premises liability','employment attorney','employment lawyer','employment law firm','workplace lawsuit','wrongful termination','workplace discrimination','workers compensation attorney','workers compensation lawyer','work injury lawyer','work injury attorney'];
+const LEGAL_PROFESSION_SIGNALS=['attorney','attorneys','lawyer','lawyers','law firm','legal counsel','legal representation','legal services'];
+const PERMITTED_LEGAL_SIGNALS=['family law','divorce attorney','divorce lawyer','estate planning','probate attorney','immigration lawyer','immigration attorney','bankruptcy lawyer','bankruptcy attorney','wills and trusts'];
+function exclusionSubjectGate(inquiry,item){
+ const name=normalize(item.name);
+ if(LEGAL_EXCLUSION_RE.test(item.name)||name.includes('attorneys slip fall or employment')){
+  const restricted=RESTRICTED_LEGAL_SIGNALS.filter(t=>hasEvidencePhrase(inquiry,t));
+  const profession=LEGAL_PROFESSION_SIGNALS.some(t=>hasEvidencePhrase(inquiry,t));
+  const permitted=PERMITTED_LEGAL_SIGNALS.some(t=>hasEvidencePhrase(inquiry,t));
+  // A generic attorney advertisement does not establish a restricted specialty.
+  if(!restricted.length)return {allowed:false,reason:profession?'Legal practice detected, but no restricted specialty established.':'No legal advertising evidence.'};
+  // A phrase such as "employment attorney" is sufficiently specific; generic
+  // employment wording in an unrelated ad is not.
+  return {allowed:true,terms:restricted};
+ }
+ return {allowed:true,terms:[]};
+}
 function overlapScore(inquiry,item,detected){
-  const text=normalize(inquiry), inquiryTokens=new Set(policyTokens(inquiry));
-  const title=normalize(item.name), note=normalize(item.note||"");
-  let score=0, hits=[], reasons=[], policyHits=[];
-  if(title&&text.includes(title)){score+=10;hits.push(item.name);reasons.push("Exact exclusion title appears in the inquiry.");}
-  if(note&&text.includes(note)){score+=9;policyHits.push(item.note);reasons.push("Exact explanatory policy language appears in the inquiry.");}
-
-  const titleTokens=policyTokens(item.name), noteTokens=policyTokens(item.note||"");
-  const matchedTitleTokens=titleTokens.filter(token=>inquiryTokens.has(token));
-  const matchedNoteTokens=noteTokens.filter(token=>inquiryTokens.has(token));
-  if(matchedTitleTokens.length){
-    score+=matchedTitleTokens.length*2.4;
-    hits.push(...matchedTitleTokens);
-    reasons.push(`Matched exclusion title wording: ${matchedTitleTokens.join(", ")}.`);
+ const gate=exclusionSubjectGate(inquiry,item);
+ if(!gate.allowed)return {score:0,hits:[],policyHits:[],reasons:[],concepts:[]};
+ const text=normalize(inquiry), title=normalize(item.name);
+ let score=0,hits=[],reasons=[];
+ if(hasEvidencePhrase(inquiry,item.name)){
+  score+=10;hits.push(item.name);reasons.push('Exact exclusion title appears in the inquiry.');
+ }
+ // Only the exclusion TITLE, vetted category synonyms, and concept terms are
+ // positive evidence. Policy notes are for interpretation, never keyword triggers.
+ const titleTokens=policyTokens(item.name);
+ const matchedTitleTokens=titleTokens.filter(token=>hasEvidencePhrase(inquiry,token));
+ if(matchedTitleTokens.length){
+  score+=matchedTitleTokens.length*2.4;hits.push(...matchedTitleTokens);
+  reasons.push('Matched exclusion title wording: '+matchedTitleTokens.join(', ')+'.');
+ }
+ const inquiryPhrases=new Set(phraseWindows(inquiry));
+ const titlePhrases=phraseWindows(item.name);
+ const phraseMatches=titlePhrases.filter(phrase=>inquiryPhrases.has(phrase));
+ if(phraseMatches.length){score+=phraseMatches.length*3;hits.push(...phraseMatches);reasons.push('Matched exclusion title phrase.');}
+ (ASSISTANT_SYNONYMS[item.name]||[]).forEach(term=>{
+  if(hasEvidencePhrase(inquiry,term)){score+=3.5;hits.push(term);reasons.push('Related category synonym: '+term+'.');}
+ });
+ const categoryConcepts=conceptsForCategory(item.name);
+ detected.forEach(c=>{
+  if(categoryConcepts.includes(c.name)){
+   const confirmed=c.hits.filter(t=>hasEvidencePhrase(inquiry,t));
+   if(confirmed.length){score+=4+confirmed.length;hits.push(...confirmed);reasons.push('Related concept detected: '+c.name+'.');}
   }
-  if(matchedNoteTokens.length){
-    score+=matchedNoteTokens.length*2.1;
-    hits.push(...matchedNoteTokens);policyHits.push(...matchedNoteTokens);
-    reasons.push(`Matched explanatory policy wording: ${matchedNoteTokens.join(", ")}.`);
-  }
-
-  const inquiryPhrases=new Set(phraseWindows(inquiry));
-  const policyPhrases=phraseWindows([item.name,item.note||""].join(" "));
-  const phraseMatches=policyPhrases.filter(phrase=>inquiryPhrases.has(phrase));
-  if(phraseMatches.length){score+=phraseMatches.length*3;hits.push(...phraseMatches);policyHits.push(...phraseMatches);reasons.push(`Matched policy phrase: ${phraseMatches.slice(0,3).join(", ")}.`);}
-
-  const direct=ASSISTANT_SYNONYMS[item.name]||[];
-  direct.forEach(term=>{if(text.includes(normalize(term))){score+=3.5;hits.push(term);reasons.push(`Related synonym detected: ${term}.`);}});
-
-  const categoryConcepts=conceptsForCategory(item.name);
-  detected.forEach(c=>{
-    if(categoryConcepts.includes(c.name)){
-      score+=4+c.hits.length;
-      reasons.push(`Related concept detected: ${c.name}.`);
-      hits.push(...c.hits);
-    }
-  });
-  if(hits.length&&!reasons.length) reasons.push("Related keywords overlap with the exclusion title or its explanatory language.");
-  return {score,hits:[...new Set(hits)].slice(0,10),policyHits:[...new Set(policyHits)].slice(0,8),reasons:[...new Set(reasons)].slice(0,4),concepts:categoryConcepts};
+ });
+ if(gate.terms.length){score+=Math.min(10,gate.terms.length*5);hits.push(...gate.terms);reasons.push('Restricted legal specialty explicitly advertised.');}
+ return {score,hits:[...new Set(hits)].slice(0,10),policyHits:[],reasons:[...new Set(reasons)].slice(0,4),concepts:categoryConcepts};
 }
 function buildClarifyingQuestions(matches,inquiry){
   const names=matches.map(x=>normalize(x.name)).join(" ");
@@ -2125,7 +2144,9 @@ function weightedExclusionScore(match, inquiry, detected, selected){
  if(/massage/i.test(name+' '+note)&&/physical therapy|rehabilitation|injury recovery|licensed physical therapist|post.surgical rehab/i.test(low)) {adjustment=-25;exception='Therapeutic/rehabilitation context detected; verify the policy exception.';}
  if(/alcohol|liquor|beer|wine/i.test(name+' '+note)&&/non.alcoholic|alcohol.free|zero.proof/i.test(low)){adjustment=-25;exception='Non-alcoholic context detected; verify the actual product.';}
  const parts=[exact,theme,context,supporting,venue];
- const score=Math.max(0,Math.min(100,parts.reduce((a,b)=>a+b,0)+adjustment));
+ const legalGate=exclusionSubjectGate(inquiry,match);
+ const legalMinimum=legalGate.allowed&&legalGate.terms?.length?Math.min(88,68+legalGate.terms.length*4):0;
+ const score=Math.max(legalMinimum,Math.max(0,Math.min(100,parts.reduce((a,b)=>a+b,0)+adjustment)));
  return {score,parts,adjustment,exception};
 }
 // Text-only category searches use category equivalence, not artwork-evidence weights.
